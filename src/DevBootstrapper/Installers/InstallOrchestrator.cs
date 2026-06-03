@@ -110,13 +110,7 @@ public sealed class InstallOrchestrator
         // Visual Studio
         if (config.VisualStudioEdition != VisualStudioEdition.Skip)
         {
-            string vsYear = config.VisualStudioVersion switch
-            {
-                VisualStudioVersion.VS2019 => "2019",
-                VisualStudioVersion.VS2022 => "2022",
-                _ => "2022"
-            };
-
+            string vsYear = config.VisualStudioVersion.ToYear();
             string vsTaskName = $"Install Visual Studio {config.VisualStudioEdition} {vsYear}";
             await RunPackageTask(tasks, vsTaskName, async () =>
             {
@@ -165,9 +159,7 @@ public sealed class InstallOrchestrator
                 if (!string.IsNullOrWhiteSpace(config.RiderVersion) &&
                     !config.RiderVersion.Equals("latest", StringComparison.OrdinalIgnoreCase))
                 {
-                    versionArg = resolvedProvider == PackageProvider.Winget
-                        ? $"--version {config.RiderVersion}"
-                        : $"--version {config.RiderVersion}";
+                    versionArg = $"--version {config.RiderVersion}";
                 }
 
                 return await _provider.InstallPackageAsync(

@@ -506,14 +506,8 @@ public sealed class SetupWizard
         Console.WriteLine();
         if (config.VisualStudioEdition != VisualStudioEdition.Skip)
         {
-            string vsYear = config.VisualStudioVersion switch
-            {
-                VisualStudioVersion.VS2019 => "2019",
-                VisualStudioVersion.VS2022 => "2022",
-                _ => "2022"
-            };
             WriteColored("    ✓ ", ConsoleColor.Green);
-            Console.WriteLine($"Visual Studio {config.VisualStudioEdition} {vsYear}");
+            Console.WriteLine($"Visual Studio {config.VisualStudioEdition} {config.VisualStudioVersion.ToYear()}");
         }
         if (config.InstallRider)
         {

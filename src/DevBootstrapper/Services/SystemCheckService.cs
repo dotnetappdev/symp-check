@@ -34,12 +34,7 @@ public sealed class SystemCheckService
         if (!RuntimeInformation.IsOSPlatform(OSPlatform.Windows))
             return false;
 
-        string year = version switch
-        {
-            VisualStudioVersion.VS2019 => "2019",
-            VisualStudioVersion.VS2022 => "2022",
-            _ => "2022"
-        };
+        string year = version.ToYear();
 
         string[] vsPaths =
         [

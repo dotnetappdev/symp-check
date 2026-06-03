@@ -30,6 +30,18 @@ public enum VisualStudioVersion
     VS2022
 }
 
+/// <summary>Convenience extensions for <see cref="VisualStudioVersion"/>.</summary>
+public static class VisualStudioVersionExtensions
+{
+    /// <summary>Returns the four-digit release year string (e.g. "2022").</summary>
+    public static string ToYear(this VisualStudioVersion version) => version switch
+    {
+        VisualStudioVersion.VS2019 => "2019",
+        VisualStudioVersion.VS2022 => "2022",
+        _ => "2022"
+    };
+}
+
 /// <summary>Holds all answers gathered during the wizard steps.</summary>
 public sealed class SetupConfiguration
 {

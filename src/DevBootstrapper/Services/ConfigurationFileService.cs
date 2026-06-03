@@ -174,8 +174,8 @@ public sealed class ConfigurationFileService
             if (string.IsNullOrEmpty(line) || line.StartsWith(';') || line.StartsWith('#'))
                 continue;
 
-            // Section header
-            if (line.StartsWith('[') && line.EndsWith(']'))
+            // Section header  (line is at least "[]" → 2 chars, so [1..^1] is always safe)
+            if (line.StartsWith('[') && line.EndsWith(']') && line.Length >= 2)
             {
                 currentSection = line[1..^1].Trim();
                 continue;

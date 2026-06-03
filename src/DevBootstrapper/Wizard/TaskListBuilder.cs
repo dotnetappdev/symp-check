@@ -28,15 +28,7 @@ public static class TaskListBuilder
             tasks.Add(new() { Name = $"Clone {ExtractRepoName(repo)}" });
 
         if (config.VisualStudioEdition != VisualStudioEdition.Skip)
-        {
-            string vsYear = config.VisualStudioVersion switch
-            {
-                VisualStudioVersion.VS2019 => "2019",
-                VisualStudioVersion.VS2022 => "2022",
-                _ => "2022"
-            };
-            tasks.Add(new() { Name = $"Install Visual Studio {config.VisualStudioEdition} {vsYear}" });
-        }
+            tasks.Add(new() { Name = $"Install Visual Studio {config.VisualStudioEdition} {config.VisualStudioVersion.ToYear()}" });
 
         if (config.InstallRider)
             tasks.Add(new() { Name = "Install JetBrains Rider" });

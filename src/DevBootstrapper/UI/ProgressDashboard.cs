@@ -7,6 +7,7 @@ namespace DevBootstrapper.UI;
 /// <summary>
 /// Displays a Terminal.Gui dashboard showing overall progress, task list,
 /// and a live log panel while installation is running.
+/// Uses vivid 16-colour schemes for maximum visual clarity.
 /// </summary>
 public sealed class ProgressDashboard
 {
@@ -23,6 +24,17 @@ public sealed class ProgressDashboard
 
     private readonly object _lock = new();
 
+    // ── Colour schemes ────────────────────────────────────────────────────────
+    // Mirrors the bold palette used in Terminal.Gui's own demo applications.
+    private static readonly ColorScheme SchemeBase      = MakeScheme(ColorName16.White,         ColorName16.Black);
+    private static readonly ColorScheme SchemeTitle     = MakeScheme(ColorName16.BrightYellow,  ColorName16.Black);
+    private static readonly ColorScheme SchemeProgress  = MakeScheme(ColorName16.BrightGreen,   ColorName16.Black);
+    private static readonly ColorScheme SchemeTask      = MakeScheme(ColorName16.BrightCyan,    ColorName16.Black);
+    private static readonly ColorScheme SchemeLog       = MakeScheme(ColorName16.BrightMagenta, ColorName16.Black);
+    private static readonly ColorScheme SchemeLogText   = MakeScheme(ColorName16.BrightYellow,  ColorName16.Black);
+    private static readonly ColorScheme SchemeTaskText  = MakeScheme(ColorName16.White,         ColorName16.Black);
+    private static readonly ColorScheme SchemeCurrent   = MakeScheme(ColorName16.BrightCyan,    ColorName16.Black);
+
     public ProgressDashboard(List<InstallTask> tasks, string logPath)
     {
         _tasks = tasks;
@@ -35,6 +47,7 @@ public sealed class ProgressDashboard
     /// </summary>
     public void Show(Func<Action<string>, Task> installWork)
     {
+        Application.Force16Colors = true;   // enable the vivid 16-colour palette
         Application.Init();
 
         BuildUi();
@@ -69,21 +82,26 @@ public sealed class ProgressDashboard
     private void BuildUi()
     {
         var top = Application.Top ?? throw new InvalidOperationException("Application.Top is null; call Application.Init() first.");
+        top.ColorScheme = SchemeBase;
 
+        // ── Title banner ──────────────────────────────────────────────────────
         var titleLabel = new Label
         {
-            Text = "  Developer Environment Bootstrapper  ",
+            Text = "══  Developer Environment Bootstrapper  ══",
             X = Pos.Center(),
-            Y = 0
+            Y = 0,
+            ColorScheme = SchemeTitle
         };
 
+        // ── Overall progress frame ────────────────────────────────────────────
         var progressFrame = new FrameView
         {
             Title = "Overall Progress",
             X = 0,
             Y = 2,
             Width = Dim.Fill(),
-            Height = 4
+            Height = 4,
+            ColorScheme = SchemeProgress
         };
 
         _overallProgress = new ProgressBar
@@ -91,24 +109,29 @@ public sealed class ProgressDashboard
             X = 1,
             Y = 1,
             Width = Dim.Fill()! - Dim.Absolute(2)!,
-            Fraction = 0f
+            Fraction = 0f,
+            ColorScheme = SchemeProgress
         };
         progressFrame.Add(_overallProgress);
 
+        // ── Current-task label ────────────────────────────────────────────────
         _currentTaskLabel = new Label
         {
             Text = "Initialising...",
             X = 2,
-            Y = 7
+            Y = 7,
+            ColorScheme = SchemeCurrent
         };
 
+        // ── Task list panel ───────────────────────────────────────────────────
         var taskFrame = new FrameView
         {
             Title = "Tasks",
             X = 0,
             Y = 9,
             Width = Dim.Percent(50),
-            Height = Dim.Fill()! - Dim.Absolute(10)!
+            Height = Dim.Fill()! - Dim.Absolute(10)!,
+            ColorScheme = SchemeTask
         };
 
         _taskListView = new ListView
@@ -117,18 +140,21 @@ public sealed class ProgressDashboard
             Y = 0,
             Width = Dim.Fill(),
             Height = Dim.Fill(),
-            CanFocus = false
+            CanFocus = false,
+            ColorScheme = SchemeTaskText
         };
         _taskListView.SetSource(_taskItems);
         taskFrame.Add(_taskListView);
 
+        // ── Live log panel ────────────────────────────────────────────────────
         var logFrame = new FrameView
         {
             Title = "Live Log",
             X = Pos.Percent(50),
             Y = 9,
             Width = Dim.Fill(),
-            Height = Dim.Fill()! - Dim.Absolute(10)!
+            Height = Dim.Fill()! - Dim.Absolute(10)!,
+            ColorScheme = SchemeLog
         };
 
         _logView = new ListView
@@ -137,7 +163,8 @@ public sealed class ProgressDashboard
             Y = 0,
             Width = Dim.Fill(),
             Height = Dim.Fill(),
-            CanFocus = false
+            CanFocus = false,
+            ColorScheme = SchemeLogText
         };
         _logView.SetSource(_logItems);
         logFrame.Add(_logView);
@@ -195,5 +222,18 @@ public sealed class ProgressDashboard
         InstallStatus.Running   => "⟳",
         InstallStatus.Skipped   => "—",
         _                       => "□"
+    };
+
+    /// <summary>
+    /// Creates a vivid <see cref="ColorScheme"/> with the given foreground/background pair.
+    /// The hot-key and focus attributes are set to complementary bright colours.
+    /// </summary>
+    private static ColorScheme MakeScheme(ColorName16 fg, ColorName16 bg) => new()
+    {
+        Normal    = new Terminal.Gui.Attribute(fg, bg),
+        Focus     = new Terminal.Gui.Attribute(ColorName16.White,        ColorName16.BrightBlue),
+        HotNormal = new Terminal.Gui.Attribute(ColorName16.BrightYellow, bg),
+        HotFocus  = new Terminal.Gui.Attribute(ColorName16.BrightYellow, ColorName16.BrightBlue),
+        Disabled  = new Terminal.Gui.Attribute(ColorName16.Gray,         bg)
     };
 }

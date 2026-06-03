@@ -1,0 +1,53 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="700" height="420" viewBox="0 0 700 420">
+  <defs>
+    <style>
+      .terminal { font-family: 'Cascadia Code', 'Consolas', 'Courier New', monospace; font-size: 14px; }
+      .bg { fill: #0C0C0C; }
+      .cyan { fill: #00D7D7; }
+      .yellow { fill: #FFD700; }
+      .white { fill: #F8F8F8; }
+      .green { fill: #16C60C; }
+      .red { fill: #E74856; }
+      .gray { fill: #888888; }
+      .dark-gray { fill: #555555; }
+    </style>
+  </defs>
+
+  <!-- Terminal window background -->
+  <rect width="700" height="420" class="bg" rx="8"/>
+
+  <!-- Title bar -->
+  <rect x="0" y="0" width="700" height="28" fill="#2D2D2D" rx="8"/>
+  <rect x="0" y="14" width="700" height="14" fill="#2D2D2D"/>
+  <circle cx="20" cy="14" r="6" fill="#FF5F57"/>
+  <circle cx="42" cy="14" r="6" fill="#FFBD2E"/>
+  <circle cx="64" cy="14" r="6" fill="#28C840"/>
+  <text x="350" y="19" text-anchor="middle" fill="#AAAAAA" font-family="Segoe UI, sans-serif" font-size="12">DevBootstrapper — Setup Complete</text>
+
+  <!-- Content area -->
+  <g class="terminal" transform="translate(30, 50)">
+
+    <!-- Completion box -->
+    <text y="18" class="cyan">  ╔══════════════════════════════════════════════════╗</text>
+    <text y="36" class="yellow">  ║                                                  ║</text>
+    <text y="54" class="yellow">  ║             ✔  Setup Complete                    ║</text>
+    <text y="72" class="yellow">  ║                                                  ║</text>
+    <text y="90" class="cyan">  ╚══════════════════════════════════════════════════╝</text>
+
+    <!-- Task results -->
+    <text y="118" class="green">  ✓  </text><text x="62" y="118" class="white">Install Chocolatey</text>
+    <text y="138" class="green">  ✓  </text><text x="62" y="138" class="white">Install Git</text>
+    <text y="158" class="green">  ✓  </text><text x="62" y="158" class="white">Install .NET Framework 4.8</text>
+    <text y="178" class="green">  ✓  </text><text x="62" y="178" class="white">Install Visual Studio Professional</text>
+    <text y="198" class="green">  ✓  </text><text x="62" y="198" class="white">Install JetBrains Rider</text>
+    <text y="218" class="green">  ✓  </text><text x="62" y="218" class="white">Clone Symphony Messenger repository</text>
+
+    <!-- Footer -->
+    <text y="250" class="dark-gray">  Working Directory: </text><text x="176" y="250" class="cyan">C:\Work</text>
+    <text y="270" class="dark-gray">  Log Location:      </text><text x="176" y="270" class="cyan">%LOCALAPPDATA%\DevBootstrapper\Logs\install_20260603.log</text>
+
+    <!-- Press any key -->
+    <text y="302" class="dark-gray">  Press any key to exit.</text>
+
+  </g>
+</svg>

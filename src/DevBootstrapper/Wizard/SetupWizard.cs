@@ -65,25 +65,23 @@ public sealed class SetupWizard
     // -------------------------------------------------------------------------
     private static EnvironmentType Step1_SelectEnvironment()
     {
+        PrintStepHeader(1, "Select Environment");
+        WriteColored("Which environment would you like to set up?", ConsoleColor.White);
         Console.WriteLine();
-        Console.WriteLine("=== Step 1 – Select Environment ===");
-        Console.WriteLine();
-        Console.WriteLine("Which environment would you like to set up?");
-        Console.WriteLine();
-        Console.WriteLine("  1. Symphony Messenger");
-        Console.WriteLine("  2. Custom");
+        WriteChoice("1", "Symphony Messenger");
+        WriteChoice("2", "Custom");
         Console.WriteLine();
 
         while (true)
         {
-            Console.Write("Choice: ");
+            WritePrompt("Choice");
             string? input = Console.ReadLine()?.Trim();
             switch (input)
             {
                 case "1": return EnvironmentType.SymphonyMessenger;
                 case "2": return EnvironmentType.Custom;
                 default:
-                    Console.WriteLine("Please enter 1 or 2.");
+                    WriteWarning("Please enter 1 or 2.");
                     break;
             }
         }
@@ -96,20 +94,20 @@ public sealed class SetupWizard
     {
         const string defaultDir = @"C:\Work";
 
+        PrintStepHeader(2, "Working Directory");
+        WriteColored("Default: ", ConsoleColor.Gray);
+        WriteColored(defaultDir, ConsoleColor.Cyan);
         Console.WriteLine();
-        Console.WriteLine("=== Step 2 – Working Directory ===");
         Console.WriteLine();
-        Console.WriteLine($"Default: {defaultDir}");
+        WriteColored("Use default?", ConsoleColor.White);
         Console.WriteLine();
-        Console.WriteLine("Use default?");
-        Console.WriteLine();
-        Console.WriteLine("  [Y] Yes");
-        Console.WriteLine("  [N] Choose Custom");
+        WriteChoice("Y", "Yes – use default");
+        WriteChoice("N", "No  – enter custom path");
         Console.WriteLine();
 
         while (true)
         {
-            Console.Write("Choice [Y/N]: ");
+            WritePrompt("Choice [Y/N]");
             string? input = Console.ReadLine()?.Trim().ToUpperInvariant();
             if (input == "Y" || input == "")
                 return defaultDir;
@@ -117,16 +115,16 @@ public sealed class SetupWizard
             if (input == "N")
             {
                 Console.WriteLine();
-                Console.Write("Enter working directory: ");
+                WritePrompt("Enter working directory");
                 string? custom = Console.ReadLine()?.Trim();
                 if (!string.IsNullOrWhiteSpace(custom))
                     return custom;
 
-                Console.WriteLine("Directory cannot be empty.");
+                WriteWarning("Directory cannot be empty.");
             }
             else
             {
-                Console.WriteLine("Please enter Y or N.");
+                WriteWarning("Please enter Y or N.");
             }
         }
     }
@@ -136,13 +134,11 @@ public sealed class SetupWizard
     // -------------------------------------------------------------------------
     private static (bool cloneDefault, List<string> additional) Step3_RepositorySetup()
     {
+        PrintStepHeader(3, "Repository Setup");
+        WriteColored("Clone Symphony Messenger repositories?", ConsoleColor.White);
         Console.WriteLine();
-        Console.WriteLine("=== Step 3 – Repository Setup ===");
-        Console.WriteLine();
-        Console.WriteLine("Clone Symphony Messenger repositories?");
-        Console.WriteLine();
-        Console.WriteLine("  [Y] Yes");
-        Console.WriteLine("  [N] No");
+        WriteChoice("Y", "Yes");
+        WriteChoice("N", "No");
         Console.WriteLine();
 
         bool cloneDefault = PromptYesNo("Clone repositories?", defaultYes: true);
@@ -152,7 +148,9 @@ public sealed class SetupWizard
         if (cloneDefault)
         {
             Console.WriteLine();
-            Console.WriteLine($"  Default: {SetupConfiguration.DefaultRepository}");
+            WriteColored("  Default: ", ConsoleColor.Gray);
+            WriteColored(SetupConfiguration.DefaultRepository, ConsoleColor.Cyan);
+            Console.WriteLine();
 
             while (true)
             {
@@ -160,7 +158,7 @@ public sealed class SetupWizard
                 bool addMore = PromptYesNo("Would you like to add another repository?", defaultYes: false);
                 if (!addMore) break;
 
-                Console.Write("Repository URL: ");
+                WritePrompt("Repository URL");
                 string? url = Console.ReadLine()?.Trim();
                 if (!string.IsNullOrWhiteSpace(url))
                     additional.Add(url);
@@ -175,20 +173,18 @@ public sealed class SetupWizard
     // -------------------------------------------------------------------------
     private PackageProvider Step4_PackageProvider()
     {
+        PrintStepHeader(4, "Package Provider");
+        WriteColored("Select installation provider", ConsoleColor.White);
         Console.WriteLine();
-        Console.WriteLine("=== Step 4 – Package Provider ===");
-        Console.WriteLine();
-        Console.WriteLine("Select installation provider");
-        Console.WriteLine();
-        Console.WriteLine("  1. Auto Detect");
-        Console.WriteLine("  2. Winget");
-        Console.WriteLine("  3. Chocolatey");
+        WriteChoice("1", "Auto Detect  (recommended)");
+        WriteChoice("2", "Winget");
+        WriteChoice("3", "Chocolatey");
         Console.WriteLine();
 
         PackageProvider choice;
         while (true)
         {
-            Console.Write("Choice: ");
+            WritePrompt("Choice");
             string? input = Console.ReadLine()?.Trim();
             switch (input)
             {
@@ -196,7 +192,7 @@ public sealed class SetupWizard
                 case "2": choice = PackageProvider.Winget; goto done;
                 case "3": choice = PackageProvider.Chocolatey; goto done;
                 default:
-                    Console.WriteLine("Please enter 1, 2, or 3.");
+                    WriteWarning("Please enter 1, 2, or 3.");
                     break;
             }
         }
@@ -206,12 +202,12 @@ public sealed class SetupWizard
         if (choice == PackageProvider.Chocolatey && !_packageProvider.IsChocolateyAvailable())
         {
             Console.WriteLine();
-            Console.WriteLine("Chocolatey was not found.");
+            WriteWarning("Chocolatey was not found.");
             Console.WriteLine();
             bool install = PromptYesNo("Install Chocolatey?", defaultYes: true);
             if (!install)
             {
-                Console.WriteLine("Falling back to Winget.");
+                WriteWarning("Falling back to Winget.");
                 choice = PackageProvider.Winget;
             }
         }
@@ -224,32 +220,30 @@ public sealed class SetupWizard
     // -------------------------------------------------------------------------
     private static VisualStudioEdition Step5_VisualStudio()
     {
+        PrintStepHeader(5, "Visual Studio");
+        WriteColored("Install Visual Studio?", ConsoleColor.White);
         Console.WriteLine();
-        Console.WriteLine("=== Step 5 – Visual Studio ===");
-        Console.WriteLine();
-        Console.WriteLine("Install Visual Studio?");
-        Console.WriteLine();
-        Console.WriteLine("  1. Community");
-        Console.WriteLine("  2. Professional");
-        Console.WriteLine("  3. Skip");
+        WriteChoice("1", "Community");
+        WriteChoice("2", "Professional");
+        WriteChoice("3", "Skip");
         Console.WriteLine();
 
         while (true)
         {
-            Console.Write("Choice: ");
+            WritePrompt("Choice");
             string? input = Console.ReadLine()?.Trim();
             switch (input)
             {
                 case "1": return VisualStudioEdition.Community;
                 case "2":
                     Console.WriteLine();
-                    Console.Write("Enter Product Key (optional, press Enter to skip): ");
+                    WritePrompt("Enter Product Key (optional, press Enter to skip)");
                     // Read but do not store in any variable that could be logged
                     ReadProductKeySecurely();
                     return VisualStudioEdition.Professional;
                 case "3": return VisualStudioEdition.Skip;
                 default:
-                    Console.WriteLine("Please enter 1, 2, or 3.");
+                    WriteWarning("Please enter 1, 2, or 3.");
                     break;
             }
         }
@@ -285,8 +279,7 @@ public sealed class SetupWizard
     // -------------------------------------------------------------------------
     private static bool Step6_JetBrainsRider()
     {
-        Console.WriteLine();
-        Console.WriteLine("=== Step 6 – JetBrains Rider ===");
+        PrintStepHeader(6, "JetBrains Rider");
         Console.WriteLine();
         return PromptYesNo("Install JetBrains Rider?", defaultYes: true);
     }
@@ -296,13 +289,12 @@ public sealed class SetupWizard
     // -------------------------------------------------------------------------
     private bool Step7_DotNetFramework()
     {
-        Console.WriteLine();
-        Console.WriteLine("=== Step 7 – .NET Framework 4.8 ===");
-        Console.WriteLine();
+        PrintStepHeader(7, ".NET Framework 4.8");
 
         if (_sysCheck.IsDotNetFramework48Installed())
         {
-            Console.WriteLine(".NET Framework 4.8 is already installed.");
+            WriteColored("  ✓  .NET Framework 4.8 is already installed.", ConsoleColor.Green);
+            Console.WriteLine();
             return false; // no action needed
         }
 
@@ -314,17 +306,16 @@ public sealed class SetupWizard
     // -------------------------------------------------------------------------
     private bool Step8_Git()
     {
-        Console.WriteLine();
-        Console.WriteLine("=== Step 8 – Git ===");
-        Console.WriteLine();
+        PrintStepHeader(8, "Git");
 
         if (_git.IsGitInstalled())
         {
-            Console.WriteLine("Git is already installed.");
+            WriteColored("  ✓  Git is already installed.", ConsoleColor.Green);
+            Console.WriteLine();
             return false;
         }
 
-        Console.WriteLine("Git was not detected.");
+        WriteWarning("Git was not detected.");
         Console.WriteLine();
         return PromptYesNo("Install Git?", defaultYes: true);
     }
@@ -334,43 +325,67 @@ public sealed class SetupWizard
     // -------------------------------------------------------------------------
     private static bool Step9_Review(SetupConfiguration config)
     {
+        PrintStepHeader(9, "Review Configuration");
+
+        WriteColored($"  Environment:       ", ConsoleColor.Gray);
+        WriteColored(config.Environment.ToString(), ConsoleColor.Cyan);
         Console.WriteLine();
-        Console.WriteLine("=== Step 9 – Review Configuration ===");
+        WriteColored($"  Working Directory: ", ConsoleColor.Gray);
+        WriteColored(config.WorkingDirectory, ConsoleColor.Cyan);
         Console.WriteLine();
-        Console.WriteLine($"  Environment:       {config.Environment}");
-        Console.WriteLine($"  Working Directory: {config.WorkingDirectory}");
         Console.WriteLine();
-        Console.WriteLine("  Repositories:");
+
+        WriteColored("  Repositories:", ConsoleColor.White);
+        Console.WriteLine();
         if (config.CloneDefaultRepository)
-            Console.WriteLine($"    ✓ {SetupConfiguration.DefaultRepository}");
+        {
+            WriteColored("    ✓ ", ConsoleColor.Green);
+            Console.WriteLine(SetupConfiguration.DefaultRepository);
+        }
         foreach (var repo in config.AdditionalRepositories)
-            Console.WriteLine($"    ✓ {repo}");
+        {
+            WriteColored("    ✓ ", ConsoleColor.Green);
+            Console.WriteLine(repo);
+        }
 
         Console.WriteLine();
-        Console.WriteLine("  Tools:");
+        WriteColored("  Tools:", ConsoleColor.White);
+        Console.WriteLine();
         if (config.VisualStudioEdition != VisualStudioEdition.Skip)
-            Console.WriteLine($"    ✓ Visual Studio {config.VisualStudioEdition}");
+        {
+            WriteColored("    ✓ ", ConsoleColor.Green);
+            Console.WriteLine($"Visual Studio {config.VisualStudioEdition}");
+        }
         if (config.InstallRider)
-            Console.WriteLine("    ✓ JetBrains Rider");
+        {
+            WriteColored("    ✓ ", ConsoleColor.Green);
+            Console.WriteLine("JetBrains Rider");
+        }
         if (config.InstallDotNetFramework48)
-            Console.WriteLine("    ✓ .NET Framework 4.8");
+        {
+            WriteColored("    ✓ ", ConsoleColor.Green);
+            Console.WriteLine(".NET Framework 4.8");
+        }
         if (config.InstallGit)
-            Console.WriteLine("    ✓ Git");
+        {
+            WriteColored("    ✓ ", ConsoleColor.Green);
+            Console.WriteLine("Git");
+        }
 
         Console.WriteLine();
-        Console.WriteLine("Proceed with installation?");
+        WriteColored("Proceed with installation?", ConsoleColor.White);
         Console.WriteLine();
-        Console.WriteLine("  [Y] Install");
-        Console.WriteLine("  [N] Cancel");
+        WriteChoice("Y", "Install");
+        WriteChoice("N", "Cancel");
         Console.WriteLine();
 
         while (true)
         {
-            Console.Write("Choice [Y/N]: ");
+            WritePrompt("Choice [Y/N]");
             string? input = Console.ReadLine()?.Trim().ToUpperInvariant();
             if (input == "Y" || input == "") return true;
             if (input == "N") return false;
-            Console.WriteLine("Please enter Y or N.");
+            WriteWarning("Please enter Y or N.");
         }
     }
 
@@ -382,7 +397,14 @@ public sealed class SetupWizard
         string hint = defaultYes ? "[Y/n]" : "[y/N]";
         while (true)
         {
-            Console.Write($"{prompt} {hint}: ");
+            Console.ForegroundColor = ConsoleColor.Cyan;
+            Console.Write($"  {prompt} ");
+            Console.ForegroundColor = ConsoleColor.Yellow;
+            Console.Write(hint);
+            Console.ForegroundColor = ConsoleColor.White;
+            Console.Write(": ");
+            Console.ResetColor();
+
             string? input = Console.ReadLine()?.Trim().ToUpperInvariant();
 
             if (string.IsNullOrEmpty(input))
@@ -391,7 +413,7 @@ public sealed class SetupWizard
             if (input == "Y") return true;
             if (input == "N") return false;
 
-            Console.WriteLine("Please enter Y or N.");
+            WriteWarning("Please enter Y or N.");
         }
     }
 
@@ -400,9 +422,67 @@ public sealed class SetupWizard
         Console.Clear();
         Console.ForegroundColor = ConsoleColor.Cyan;
         Console.WriteLine("╔══════════════════════════════════════════════════╗");
+        Console.ForegroundColor = ConsoleColor.Yellow;
         Console.WriteLine("║       Developer Environment Bootstrapper         ║");
+        Console.ForegroundColor = ConsoleColor.Cyan;
         Console.WriteLine("╚══════════════════════════════════════════════════╝");
         Console.ResetColor();
         Console.WriteLine();
+    }
+
+    /// <summary>Prints a vivid numbered step header with a separator line.</summary>
+    private static void PrintStepHeader(int step, string title)
+    {
+        Console.WriteLine();
+        Console.ForegroundColor = ConsoleColor.DarkGray;
+        Console.WriteLine(new string('─', 52));
+        Console.ForegroundColor = ConsoleColor.Yellow;
+        Console.Write($"  Step {step}");
+        Console.ForegroundColor = ConsoleColor.DarkCyan;
+        Console.Write(" ── ");
+        Console.ForegroundColor = ConsoleColor.Cyan;
+        Console.WriteLine(title);
+        Console.ForegroundColor = ConsoleColor.DarkGray;
+        Console.WriteLine(new string('─', 52));
+        Console.ResetColor();
+        Console.WriteLine();
+    }
+
+    /// <summary>Writes text in the specified <paramref name="color"/> then resets.</summary>
+    private static void WriteColored(string text, ConsoleColor color)
+    {
+        Console.ForegroundColor = color;
+        Console.Write(text);
+        Console.ResetColor();
+    }
+
+    /// <summary>Writes a numbered/keyed menu choice with bright formatting.</summary>
+    private static void WriteChoice(string key, string description)
+    {
+        Console.ForegroundColor = ConsoleColor.Yellow;
+        Console.Write($"  [{key}]");
+        Console.ForegroundColor = ConsoleColor.White;
+        Console.Write("  ");
+        Console.ForegroundColor = ConsoleColor.Cyan;
+        Console.WriteLine(description);
+        Console.ResetColor();
+    }
+
+    /// <summary>Writes a bright prompt marker and label.</summary>
+    private static void WritePrompt(string label)
+    {
+        Console.ForegroundColor = ConsoleColor.Green;
+        Console.Write("  ❯ ");
+        Console.ForegroundColor = ConsoleColor.White;
+        Console.Write($"{label}: ");
+        Console.ResetColor();
+    }
+
+    /// <summary>Writes a yellow warning line.</summary>
+    private static void WriteWarning(string message)
+    {
+        Console.ForegroundColor = ConsoleColor.Yellow;
+        Console.WriteLine($"  ⚠  {message}");
+        Console.ResetColor();
     }
 }

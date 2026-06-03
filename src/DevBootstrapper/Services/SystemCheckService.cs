@@ -28,21 +28,31 @@ public sealed class SystemCheckService
         return false;
     }
 
-    /// <summary>Returns true when Visual Studio 2022 (any edition) is installed.</summary>
-    public bool IsVisualStudio2022Installed()
+    /// <summary>Returns true when the specified Visual Studio version (any edition) is installed.</summary>
+    public bool IsVisualStudioInstalled(VisualStudioVersion version)
     {
         if (!RuntimeInformation.IsOSPlatform(OSPlatform.Windows))
             return false;
 
+        string year = version switch
+        {
+            VisualStudioVersion.VS2019 => "2019",
+            VisualStudioVersion.VS2022 => "2022",
+            _ => "2022"
+        };
+
         string[] vsPaths =
         [
-            @"C:\Program Files\Microsoft Visual Studio\2022\Community\Common7\IDE\devenv.exe",
-            @"C:\Program Files\Microsoft Visual Studio\2022\Professional\Common7\IDE\devenv.exe",
-            @"C:\Program Files\Microsoft Visual Studio\2022\Enterprise\Common7\IDE\devenv.exe"
+            $@"C:\Program Files\Microsoft Visual Studio\{year}\Community\Common7\IDE\devenv.exe",
+            $@"C:\Program Files\Microsoft Visual Studio\{year}\Professional\Common7\IDE\devenv.exe",
+            $@"C:\Program Files\Microsoft Visual Studio\{year}\Enterprise\Common7\IDE\devenv.exe"
         ];
 
         return vsPaths.Any(File.Exists);
     }
+
+    /// <summary>Returns true when Visual Studio 2022 (any edition) is installed.</summary>
+    public bool IsVisualStudio2022Installed() => IsVisualStudioInstalled(VisualStudioVersion.VS2022);
 
     /// <summary>Returns true when JetBrains Rider is installed.</summary>
     public bool IsRiderInstalled()

@@ -28,13 +28,24 @@ public static class TaskListBuilder
             tasks.Add(new() { Name = $"Clone {ExtractRepoName(repo)}" });
 
         if (config.VisualStudioEdition != VisualStudioEdition.Skip)
-            tasks.Add(new() { Name = $"Install Visual Studio {config.VisualStudioEdition}" });
+        {
+            string vsYear = config.VisualStudioVersion switch
+            {
+                VisualStudioVersion.VS2019 => "2019",
+                VisualStudioVersion.VS2022 => "2022",
+                _ => "2022"
+            };
+            tasks.Add(new() { Name = $"Install Visual Studio {config.VisualStudioEdition} {vsYear}" });
+        }
 
         if (config.InstallRider)
             tasks.Add(new() { Name = "Install JetBrains Rider" });
 
         if (config.InstallDotNetFramework48)
             tasks.Add(new() { Name = "Install .NET Framework 4.8" });
+
+        foreach (string pkgId in config.AdditionalWingetPackages)
+            tasks.Add(new() { Name = $"Install {pkgId}" });
 
         return tasks;
     }
@@ -47,3 +58,4 @@ public static class TaskListBuilder
             : last;
     }
 }
+

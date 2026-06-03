@@ -20,37 +20,55 @@ public sealed class SetupWizard
         _sysCheck = sysCheck;
     }
 
-    /// <summary>Runs all wizard steps and returns the completed configuration.</summary>
-    public SetupConfiguration Run()
+    /// <summary>
+    /// Runs all wizard steps and returns the completed configuration.
+    /// If <paramref name="initialConfig"/> is provided (e.g. loaded from <c>bootstrapper.ini</c>)
+    /// it is used as the starting state and its values become the wizard defaults.
+    /// </summary>
+    public SetupConfiguration Run(SetupConfiguration? initialConfig = null)
     {
         PrintBanner();
 
-        var config = new SetupConfiguration();
+        var config = initialConfig ?? new SetupConfiguration();
 
         // Step 1 – Environment
-        config.Environment = Step1_SelectEnvironment();
+        config.Environment = Step1_SelectEnvironment(config.Environment);
 
         // Step 2 – Working directory
-        config.WorkingDirectory = Step2_WorkingDirectory();
+        config.WorkingDirectory = Step2_WorkingDirectory(config.WorkingDirectory);
 
         // Step 3 – Repository setup
         if (config.Environment == EnvironmentType.SymphonyMessenger)
         {
             (config.CloneDefaultRepository, config.AdditionalRepositories) =
-                Step3_RepositorySetup();
+                Step3_RepositorySetup(config.CloneDefaultRepository);
         }
 
         // Step 4 – Package provider
-        config.PackageProvider = Step4_PackageProvider();
+        config.PackageProvider = Step4_PackageProvider(config.PackageProvider);
 
-        // Steps 5–8 – Tool selection (same prompts regardless of environment)
-        config.VisualStudioEdition = Step5_VisualStudio();
-        config.InstallRider = Step6_JetBrainsRider();
-        config.InstallDotNetFramework48 = Step7_DotNetFramework();
-        config.InstallGit = Step8_Git();
+        // Step 5 – Visual Studio edition + version
+        (config.VisualStudioEdition, config.VisualStudioVersion) =
+            Step5_VisualStudio(config.VisualStudioEdition, config.VisualStudioVersion);
 
-        // Step 9 – Review
-        bool proceed = Step9_Review(config);
+        // Step 6 – JetBrains Rider + version
+        (config.InstallRider, config.RiderVersion) =
+            Step6_JetBrainsRider(config.InstallRider, config.RiderVersion);
+
+        // Step 7 – .NET Framework 4.8
+        config.InstallDotNetFramework48 = Step7_DotNetFramework(config.InstallDotNetFramework48);
+
+        // Step 8 – Git
+        config.InstallGit = Step8_Git(config.InstallGit);
+
+        // Step 9 – Silent install
+        config.SilentInstall = Step9_SilentInstall(config.SilentInstall);
+
+        // Step 10 – Additional winget packages
+        config.AdditionalWingetPackages = Step10_AdditionalPackages(config.AdditionalWingetPackages);
+
+        // Step 11 – Review
+        bool proceed = Step11_Review(config);
         if (!proceed)
         {
             Console.WriteLine("Installation cancelled. Exiting.");
@@ -63,7 +81,7 @@ public sealed class SetupWizard
     // -------------------------------------------------------------------------
     // Step 1
     // -------------------------------------------------------------------------
-    private static EnvironmentType Step1_SelectEnvironment()
+    private static EnvironmentType Step1_SelectEnvironment(EnvironmentType current)
     {
         PrintStepHeader(1, "Select Environment");
         WriteColored("Which environment would you like to set up?", ConsoleColor.White);
@@ -80,6 +98,8 @@ public sealed class SetupWizard
             {
                 case "1": return EnvironmentType.SymphonyMessenger;
                 case "2": return EnvironmentType.Custom;
+                case "":
+                    return current; // accept config-file default
                 default:
                     WriteWarning("Please enter 1 or 2.");
                     break;
@@ -90,18 +110,16 @@ public sealed class SetupWizard
     // -------------------------------------------------------------------------
     // Step 2
     // -------------------------------------------------------------------------
-    private static string Step2_WorkingDirectory()
+    private static string Step2_WorkingDirectory(string current)
     {
-        const string defaultDir = @"C:\Work";
-
         PrintStepHeader(2, "Working Directory");
         WriteColored("Default: ", ConsoleColor.Gray);
-        WriteColored(defaultDir, ConsoleColor.Cyan);
+        WriteColored(current, ConsoleColor.Cyan);
         Console.WriteLine();
         Console.WriteLine();
         WriteColored("Use default?", ConsoleColor.White);
         Console.WriteLine();
-        WriteChoice("Y", "Yes – use default");
+        WriteChoice("Y", $"Yes – use {current}");
         WriteChoice("N", "No  – enter custom path");
         Console.WriteLine();
 
@@ -110,7 +128,7 @@ public sealed class SetupWizard
             WritePrompt("Choice [Y/N]");
             string? input = Console.ReadLine()?.Trim().ToUpperInvariant();
             if (input == "Y" || input == "")
-                return defaultDir;
+                return current;
 
             if (input == "N")
             {
@@ -132,7 +150,7 @@ public sealed class SetupWizard
     // -------------------------------------------------------------------------
     // Step 3
     // -------------------------------------------------------------------------
-    private static (bool cloneDefault, List<string> additional) Step3_RepositorySetup()
+    private static (bool cloneDefault, List<string> additional) Step3_RepositorySetup(bool currentClone)
     {
         PrintStepHeader(3, "Repository Setup");
         WriteColored("Clone Symphony Messenger repositories?", ConsoleColor.White);
@@ -141,7 +159,7 @@ public sealed class SetupWizard
         WriteChoice("N", "No");
         Console.WriteLine();
 
-        bool cloneDefault = PromptYesNo("Clone repositories?", defaultYes: true);
+        bool cloneDefault = PromptYesNo("Clone repositories?", defaultYes: currentClone);
 
         var additional = new List<string>();
 
@@ -171,7 +189,7 @@ public sealed class SetupWizard
     // -------------------------------------------------------------------------
     // Step 4
     // -------------------------------------------------------------------------
-    private PackageProvider Step4_PackageProvider()
+    private PackageProvider Step4_PackageProvider(PackageProvider current)
     {
         PrintStepHeader(4, "Package Provider");
         WriteColored("Select installation provider", ConsoleColor.White);
@@ -191,6 +209,7 @@ public sealed class SetupWizard
                 case "1": choice = PackageProvider.AutoDetect; goto done;
                 case "2": choice = PackageProvider.Winget; goto done;
                 case "3": choice = PackageProvider.Chocolatey; goto done;
+                case "":  choice = current; goto done;
                 default:
                     WriteWarning("Please enter 1, 2, or 3.");
                     break;
@@ -216,9 +235,10 @@ public sealed class SetupWizard
     }
 
     // -------------------------------------------------------------------------
-    // Step 5
+    // Step 5 – Visual Studio edition + version
     // -------------------------------------------------------------------------
-    private static VisualStudioEdition Step5_VisualStudio()
+    private static (VisualStudioEdition edition, VisualStudioVersion version) Step5_VisualStudio(
+        VisualStudioEdition currentEdition, VisualStudioVersion currentVersion)
     {
         PrintStepHeader(5, "Visual Studio");
         WriteColored("Install Visual Studio?", ConsoleColor.White);
@@ -228,22 +248,54 @@ public sealed class SetupWizard
         WriteChoice("3", "Skip");
         Console.WriteLine();
 
+        VisualStudioEdition edition;
         while (true)
         {
             WritePrompt("Choice");
             string? input = Console.ReadLine()?.Trim();
             switch (input)
             {
-                case "1": return VisualStudioEdition.Community;
+                case "1": edition = VisualStudioEdition.Community; goto editionDone;
                 case "2":
                     Console.WriteLine();
                     WritePrompt("Enter Product Key (optional, press Enter to skip)");
-                    // Read but do not store in any variable that could be logged
                     ReadProductKeySecurely();
-                    return VisualStudioEdition.Professional;
-                case "3": return VisualStudioEdition.Skip;
+                    edition = VisualStudioEdition.Professional;
+                    goto editionDone;
+                case "3": return (VisualStudioEdition.Skip, currentVersion);
+                case "":  edition = currentEdition; goto editionDone;
                 default:
                     WriteWarning("Please enter 1, 2, or 3.");
+                    break;
+            }
+        }
+
+        editionDone:
+        // Ask for VS version
+        VisualStudioVersion version = Step5b_VisualStudioVersion(currentVersion);
+        return (edition, version);
+    }
+
+    private static VisualStudioVersion Step5b_VisualStudioVersion(VisualStudioVersion current)
+    {
+        Console.WriteLine();
+        WriteColored("  Which Visual Studio release year?", ConsoleColor.White);
+        Console.WriteLine();
+        WriteChoice("1", "2019");
+        WriteChoice("2", "2022  (recommended)");
+        Console.WriteLine();
+
+        while (true)
+        {
+            WritePrompt("Choice");
+            string? input = Console.ReadLine()?.Trim();
+            switch (input)
+            {
+                case "1": return VisualStudioVersion.VS2019;
+                case "2": return VisualStudioVersion.VS2022;
+                case "":  return current;
+                default:
+                    WriteWarning("Please enter 1 or 2.");
                     break;
             }
         }
@@ -275,19 +327,53 @@ public sealed class SetupWizard
     }
 
     // -------------------------------------------------------------------------
-    // Step 6
+    // Step 6 – JetBrains Rider + version
     // -------------------------------------------------------------------------
-    private static bool Step6_JetBrainsRider()
+    private static (bool install, string version) Step6_JetBrainsRider(bool currentInstall, string currentVersion)
     {
         PrintStepHeader(6, "JetBrains Rider");
         Console.WriteLine();
-        return PromptYesNo("Install JetBrains Rider?", defaultYes: true);
+        bool install = PromptYesNo("Install JetBrains Rider?", defaultYes: currentInstall);
+
+        if (!install)
+            return (false, currentVersion);
+
+        // Ask for version
+        Console.WriteLine();
+        WriteColored("  Rider version:", ConsoleColor.White);
+        Console.WriteLine();
+        WriteChoice("1", $"Latest  (recommended)");
+        WriteChoice("2", "Specific version  (e.g. 2024.1)");
+        Console.WriteLine();
+
+        while (true)
+        {
+            WritePrompt("Choice");
+            string? input = Console.ReadLine()?.Trim();
+            switch (input)
+            {
+                case "1":
+                case "":
+                    return (true, "latest");
+                case "2":
+                    Console.WriteLine();
+                    WritePrompt("Enter version (e.g. 2024.1)");
+                    string? ver = Console.ReadLine()?.Trim();
+                    if (!string.IsNullOrWhiteSpace(ver))
+                        return (true, ver);
+                    WriteWarning("Version cannot be empty – using latest.");
+                    return (true, "latest");
+                default:
+                    WriteWarning("Please enter 1 or 2.");
+                    break;
+            }
+        }
     }
 
     // -------------------------------------------------------------------------
     // Step 7
     // -------------------------------------------------------------------------
-    private bool Step7_DotNetFramework()
+    private bool Step7_DotNetFramework(bool current)
     {
         PrintStepHeader(7, ".NET Framework 4.8");
 
@@ -298,13 +384,13 @@ public sealed class SetupWizard
             return false; // no action needed
         }
 
-        return PromptYesNo("Install .NET Framework 4.8?", defaultYes: true);
+        return PromptYesNo("Install .NET Framework 4.8?", defaultYes: current);
     }
 
     // -------------------------------------------------------------------------
     // Step 8
     // -------------------------------------------------------------------------
-    private bool Step8_Git()
+    private bool Step8_Git(bool current)
     {
         PrintStepHeader(8, "Git");
 
@@ -317,21 +403,88 @@ public sealed class SetupWizard
 
         WriteWarning("Git was not detected.");
         Console.WriteLine();
-        return PromptYesNo("Install Git?", defaultYes: true);
+        return PromptYesNo("Install Git?", defaultYes: current);
     }
 
     // -------------------------------------------------------------------------
-    // Step 9
+    // Step 9 – Silent install
     // -------------------------------------------------------------------------
-    private static bool Step9_Review(SetupConfiguration config)
+    private static bool Step9_SilentInstall(bool current)
     {
-        PrintStepHeader(9, "Review Configuration");
+        PrintStepHeader(9, "Silent Install");
+        WriteColored("Run package installers in silent / non-interactive mode?", ConsoleColor.White);
+        Console.WriteLine();
+        WriteColored("  When enabled, installer windows and progress UI are suppressed.", ConsoleColor.Gray);
+        Console.WriteLine();
+        Console.WriteLine();
+        return PromptYesNo("Silent install?", defaultYes: current);
+    }
+
+    // -------------------------------------------------------------------------
+    // Step 10 – Additional winget packages
+    // -------------------------------------------------------------------------
+    private static List<string> Step10_AdditionalPackages(List<string> current)
+    {
+        PrintStepHeader(10, "Additional Packages");
+        WriteColored("Add extra software to install via winget.", ConsoleColor.White);
+        Console.WriteLine();
+
+        var packages = new List<string>(current);
+
+        if (packages.Count > 0)
+        {
+            WriteColored("  Already configured:", ConsoleColor.Gray);
+            Console.WriteLine();
+            foreach (string p in packages)
+            {
+                WriteColored("    • ", ConsoleColor.Yellow);
+                WriteColored(p, ConsoleColor.Cyan);
+                Console.WriteLine();
+            }
+            Console.WriteLine();
+        }
+
+        while (true)
+        {
+            bool addMore = PromptYesNo("Add a winget package ID?", defaultYes: false);
+            if (!addMore) break;
+
+            Console.WriteLine();
+            WriteColored("  Find IDs at: winget search <name>  or  https://winget.run", ConsoleColor.DarkGray);
+            Console.WriteLine();
+            WritePrompt("Winget Package ID (e.g. Microsoft.PowerShell)");
+            string? id = Console.ReadLine()?.Trim();
+            if (!string.IsNullOrWhiteSpace(id))
+            {
+                packages.Add(id);
+                WriteColored($"  ✓  Added: ", ConsoleColor.Green);
+                WriteColored(id, ConsoleColor.Cyan);
+                Console.WriteLine();
+            }
+            else
+            {
+                WriteWarning("Package ID cannot be empty.");
+            }
+        }
+
+        return packages;
+    }
+
+    // -------------------------------------------------------------------------
+    // Step 11 – Review
+    // -------------------------------------------------------------------------
+    private static bool Step11_Review(SetupConfiguration config)
+    {
+        PrintStepHeader(11, "Review Configuration");
 
         WriteColored($"  Environment:       ", ConsoleColor.Gray);
         WriteColored(config.Environment.ToString(), ConsoleColor.Cyan);
         Console.WriteLine();
         WriteColored($"  Working Directory: ", ConsoleColor.Gray);
         WriteColored(config.WorkingDirectory, ConsoleColor.Cyan);
+        Console.WriteLine();
+        WriteColored($"  Silent Install:    ", ConsoleColor.Gray);
+        WriteColored(config.SilentInstall ? "Yes" : "No", ConsoleColor.Cyan);
         Console.WriteLine();
         Console.WriteLine();
 
@@ -353,13 +506,22 @@ public sealed class SetupWizard
         Console.WriteLine();
         if (config.VisualStudioEdition != VisualStudioEdition.Skip)
         {
+            string vsYear = config.VisualStudioVersion switch
+            {
+                VisualStudioVersion.VS2019 => "2019",
+                VisualStudioVersion.VS2022 => "2022",
+                _ => "2022"
+            };
             WriteColored("    ✓ ", ConsoleColor.Green);
-            Console.WriteLine($"Visual Studio {config.VisualStudioEdition}");
+            Console.WriteLine($"Visual Studio {config.VisualStudioEdition} {vsYear}");
         }
         if (config.InstallRider)
         {
             WriteColored("    ✓ ", ConsoleColor.Green);
-            Console.WriteLine("JetBrains Rider");
+            string riderDesc = config.RiderVersion.Equals("latest", StringComparison.OrdinalIgnoreCase)
+                ? "JetBrains Rider (latest)"
+                : $"JetBrains Rider {config.RiderVersion}";
+            Console.WriteLine(riderDesc);
         }
         if (config.InstallDotNetFramework48)
         {
@@ -370,6 +532,18 @@ public sealed class SetupWizard
         {
             WriteColored("    ✓ ", ConsoleColor.Green);
             Console.WriteLine("Git");
+        }
+
+        if (config.AdditionalWingetPackages.Count > 0)
+        {
+            Console.WriteLine();
+            WriteColored("  Additional Packages:", ConsoleColor.White);
+            Console.WriteLine();
+            foreach (string pkg in config.AdditionalWingetPackages)
+            {
+                WriteColored("    ✓ ", ConsoleColor.Green);
+                Console.WriteLine(pkg);
+            }
         }
 
         Console.WriteLine();
@@ -486,3 +660,4 @@ public sealed class SetupWizard
         Console.ResetColor();
     }
 }
+

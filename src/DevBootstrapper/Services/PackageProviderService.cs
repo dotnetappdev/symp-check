@@ -50,14 +50,15 @@ public sealed class PackageProviderService
         PackageProvider provider,
         string packageId,
         string? extraArgs,
-        Action<string> log)
+        Action<string> log,
+        bool silentInstall = false)
     {
         string args = provider switch
         {
             PackageProvider.Winget =>
                 $"install --id {packageId} --silent --accept-package-agreements --accept-source-agreements{(extraArgs is not null ? " " + extraArgs : "")}",
             PackageProvider.Chocolatey =>
-                $"install {packageId} -y{(extraArgs is not null ? " " + extraArgs : "")}",
+                $"install {packageId} -y{(silentInstall ? " --no-progress" : "")}{(extraArgs is not null ? " " + extraArgs : "")}",
             _ => throw new InvalidOperationException($"Unsupported provider: {provider}")
         };
 

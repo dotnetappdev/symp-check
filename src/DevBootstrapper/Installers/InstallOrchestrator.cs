@@ -77,7 +77,7 @@ public sealed class InstallOrchestrator
                 }
 
                 return await _provider.InstallPackageAsync(
-                    resolvedProvider, "Git.Git", null, _log.Log);
+                    resolvedProvider, "Git.Git", null, _log.Log, config.SilentInstall);
             }, onTaskUpdate);
         }
 
@@ -110,25 +110,39 @@ public sealed class InstallOrchestrator
         // Visual Studio
         if (config.VisualStudioEdition != VisualStudioEdition.Skip)
         {
-            await RunPackageTask(tasks, $"Install Visual Studio {config.VisualStudioEdition}", async () =>
+            string vsYear = config.VisualStudioVersion switch
             {
-                if (_sysCheck.IsVisualStudio2022Installed())
+                VisualStudioVersion.VS2019 => "2019",
+                VisualStudioVersion.VS2022 => "2022",
+                _ => "2022"
+            };
+
+            string vsTaskName = $"Install Visual Studio {config.VisualStudioEdition} {vsYear}";
+            await RunPackageTask(tasks, vsTaskName, async () =>
+            {
+                if (_sysCheck.IsVisualStudioInstalled(config.VisualStudioVersion))
                 {
-                    _log.Log("Visual Studio 2022 is already installed, skipping.");
+                    _log.Log($"Visual Studio {vsYear} is already installed, skipping.");
                     return true;
                 }
 
-                string packageId = config.VisualStudioEdition == VisualStudioEdition.Community
-                    ? "Microsoft.VisualStudio.2022.Community"
-                    : "Microsoft.VisualStudio.2022.Professional";
+                string packageId = (config.VisualStudioEdition, config.VisualStudioVersion) switch
+                {
+                    (VisualStudioEdition.Community,    VisualStudioVersion.VS2019) => "Microsoft.VisualStudio.2019.Community",
+                    (VisualStudioEdition.Professional, VisualStudioVersion.VS2019) => "Microsoft.VisualStudio.2019.Professional",
+                    (VisualStudioEdition.Community,    VisualStudioVersion.VS2022) => "Microsoft.VisualStudio.2022.Community",
+                    (VisualStudioEdition.Professional, VisualStudioVersion.VS2022) => "Microsoft.VisualStudio.2022.Professional",
+                    _ => "Microsoft.VisualStudio.2022.Community"
+                };
 
-                // Recommended workloads
+                // Recommended workloads; /norestart added when silent install is requested
+                string vsInstallMode = config.SilentInstall ? "--quiet --norestart" : "--quiet";
                 string workloadArgs = resolvedProvider == PackageProvider.Winget
-                    ? "--override \"--quiet --add Microsoft.VisualStudio.Workload.ManagedDesktop --add Microsoft.VisualStudio.Workload.NetWeb --includeRecommended\""
+                    ? $"--override \"{vsInstallMode} --add Microsoft.VisualStudio.Workload.ManagedDesktop --add Microsoft.VisualStudio.Workload.NetWeb --includeRecommended\""
                     : null!;
 
                 bool installed = await _provider.InstallPackageAsync(
-                    resolvedProvider, packageId, workloadArgs, _log.Log);
+                    resolvedProvider, packageId, workloadArgs, _log.Log, config.SilentInstall);
 
                 // Product key is handled via VS activation UI; never logged
                 return installed;
@@ -146,8 +160,18 @@ public sealed class InstallOrchestrator
                     return true;
                 }
 
+                // Append --version when a specific version is requested
+                string? versionArg = null;
+                if (!string.IsNullOrWhiteSpace(config.RiderVersion) &&
+                    !config.RiderVersion.Equals("latest", StringComparison.OrdinalIgnoreCase))
+                {
+                    versionArg = resolvedProvider == PackageProvider.Winget
+                        ? $"--version {config.RiderVersion}"
+                        : $"--version {config.RiderVersion}";
+                }
+
                 return await _provider.InstallPackageAsync(
-                    resolvedProvider, "JetBrains.Rider", null, _log.Log);
+                    resolvedProvider, "JetBrains.Rider", versionArg, _log.Log, config.SilentInstall);
             }, onTaskUpdate);
         }
 
@@ -163,7 +187,7 @@ public sealed class InstallOrchestrator
                 }
 
                 bool ok = await _provider.InstallPackageAsync(
-                    resolvedProvider, "Microsoft.DotNet.Framework.DeveloperPack_4", null, _log.Log);
+                    resolvedProvider, "Microsoft.DotNet.Framework.DeveloperPack_4", null, _log.Log, config.SilentInstall);
 
                 if (ok && !_sysCheck.IsDotNetFramework48Installed())
                 {
@@ -171,6 +195,18 @@ public sealed class InstallOrchestrator
                 }
 
                 return ok;
+            }, onTaskUpdate);
+        }
+
+        // Additional winget packages
+        foreach (string pkgId in config.AdditionalWingetPackages)
+        {
+            string capturedId = pkgId;
+            await RunPackageTask(tasks, $"Install {capturedId}", async () =>
+            {
+                _log.Log($"Installing additional package: {capturedId}");
+                return await _provider.InstallPackageAsync(
+                    PackageProvider.Winget, capturedId, null, _log.Log, config.SilentInstall);
             }, onTaskUpdate);
         }
     }

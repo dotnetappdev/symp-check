@@ -1,4 +1,4 @@
-<svg xmlns="http://www.w3.org/2000/svg" width="800" height="480" viewBox="0 0 800 480">
+<svg xmlns="http://www.w3.org/2000/svg" width="800" height="560" viewBox="0 0 800 560">
   <defs>
     <style>
       .terminal { font-family: 'Cascadia Code', 'Consolas', 'Courier New', monospace; font-size: 14px; }
@@ -14,7 +14,7 @@
   </defs>
 
   <!-- Terminal window background -->
-  <rect width="800" height="480" class="bg" rx="8"/>
+  <rect width="800" height="560" class="bg" rx="8"/>
 
   <!-- Title bar -->
   <rect x="0" y="0" width="800" height="28" fill="#2D2D2D" rx="8"/>
@@ -32,23 +32,42 @@
     <text y="32" class="yellow">║       Developer Environment Bootstrapper         ║</text>
     <text y="50" class="cyan">╚══════════════════════════════════════════════════╝</text>
 
-    <!-- Separator -->
-    <text y="78" class="dark-gray">────────────────────────────────────────────────────</text>
-    <text y="96" class="yellow">  Step 1</text><text x="84" y="96" class="dark-gray"> ── </text><text x="110" y="96" class="cyan">Select Environment</text>
-    <text y="114" class="dark-gray">────────────────────────────────────────────────────</text>
+    <!-- Step 5 header -->
+    <text y="82" class="dark-gray">────────────────────────────────────────────────────</text>
+    <text y="100" class="yellow">  Step 5</text><text x="90" y="100" class="dark-gray"> ── </text><text x="116" y="100" class="cyan">Visual Studio</text>
+    <text y="118" class="dark-gray">────────────────────────────────────────────────────</text>
 
-    <!-- Question -->
-    <text y="138" class="white">Which environment would you like to set up?</text>
-    <text y="160" class="yellow">  </text>
+    <!-- VS edition question -->
+    <text y="142" class="white">Install Visual Studio?</text>
+    <text y="164" class="yellow">  [1]</text><text x="50" y="164" class="white">  </text><text x="68" y="164" class="cyan">Community</text>
+    <text y="184" class="yellow">  [2]</text><text x="50" y="184" class="white">  </text><text x="68" y="184" class="cyan">Professional</text>
+    <text y="204" class="yellow">  [3]</text><text x="50" y="204" class="white">  </text><text x="68" y="204" class="cyan">Skip</text>
 
-    <!-- Menu choices -->
-    <text y="160" class="yellow">  [1]</text><text x="50" y="160" class="white">  </text><text x="68" y="160" class="cyan">Symphony Messenger</text>
-    <text y="180" class="yellow">  [2]</text><text x="50" y="180" class="white">  </text><text x="68" y="180" class="cyan">Custom</text>
+    <text y="228" class="prompt-arrow">  ❯ </text><text x="40" y="228" class="white">Choice: </text>
+    <text x="116" y="228" class="white">1</text>
 
-    <!-- Prompt -->
-    <text y="210" class="prompt-arrow">  ❯ </text><text x="40" y="210" class="white">Choice: </text>
-    <text x="116" y="210" class="white">1</text>
-    <rect x="124" y="199" width="2" height="14" fill="#F8F8F8" opacity="0.8">
+    <!-- VS version sub-prompt -->
+    <text y="258" class="white">  Which Visual Studio release year?</text>
+    <text y="278" class="yellow">  [1]</text><text x="50" y="278" class="white">  </text><text x="68" y="278" class="cyan">2019</text>
+    <text y="298" class="yellow">  [2]</text><text x="50" y="298" class="white">  </text><text x="68" y="298" class="cyan">2022  (recommended)</text>
+
+    <text y="322" class="prompt-arrow">  ❯ </text><text x="40" y="322" class="white">Choice: </text>
+    <text x="116" y="322" class="white">2</text>
+
+    <!-- Step 6 header (Rider) -->
+    <text y="352" class="dark-gray">────────────────────────────────────────────────────</text>
+    <text y="370" class="yellow">  Step 6</text><text x="90" y="370" class="dark-gray"> ── </text><text x="116" y="370" class="cyan">JetBrains Rider</text>
+    <text y="388" class="dark-gray">────────────────────────────────────────────────────</text>
+
+    <text y="410" class="cyan">  Install JetBrains Rider? </text><text x="202" y="410" class="yellow">[Y/n]</text><text x="248" y="410" class="white">: </text><text x="260" y="410" class="white">Y</text>
+
+    <!-- Rider version sub-prompt -->
+    <text y="432" class="white">  Rider version:</text>
+    <text y="452" class="yellow">  [1]</text><text x="50" y="452" class="white">  </text><text x="68" y="452" class="cyan">Latest  (recommended)</text>
+    <text y="472" class="yellow">  [2]</text><text x="50" y="472" class="white">  </text><text x="68" y="472" class="cyan">Specific version  (e.g. 2024.1)</text>
+
+    <text y="496" class="prompt-arrow">  ❯ </text><text x="40" y="496" class="white">Choice: </text>
+    <rect x="116" y="485" width="2" height="14" fill="#F8F8F8" opacity="0.8">
       <animate attributeName="opacity" values="1;0;1" dur="1s" repeatCount="indefinite"/>
     </rect>
 

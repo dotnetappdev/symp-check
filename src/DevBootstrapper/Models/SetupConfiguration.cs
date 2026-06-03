@@ -75,6 +75,30 @@ public sealed class SetupConfiguration
     // Custom-mode tool selections
     public List<string> CustomTools { get; set; } = [];
 
+    /// <summary>
+    /// Winget package IDs used during installation.  Keys are well-known logical names;
+    /// values are the winget package identifiers.  Override any entry in the
+    /// <c>[WingetPackageIds]</c> section of <c>bootstrapper.ini</c>.
+    /// </summary>
+    public Dictionary<string, string> WingetPackageIds { get; set; } =
+        new(StringComparer.OrdinalIgnoreCase)
+        {
+            ["Git"]                          = "Git.Git",
+            ["DotNetFramework48"]            = "Microsoft.DotNet.Framework.DeveloperPack_4",
+            ["Rider"]                        = "JetBrains.Rider",
+            ["VisualStudio2022Community"]    = "Microsoft.VisualStudio.2022.Community",
+            ["VisualStudio2022Professional"] = "Microsoft.VisualStudio.2022.Professional",
+            ["VisualStudio2019Community"]    = "Microsoft.VisualStudio.2019.Community",
+            ["VisualStudio2019Professional"] = "Microsoft.VisualStudio.2019.Professional",
+        };
+
+    /// <summary>
+    /// Returns the winget package ID for the given <paramref name="key"/>,
+    /// falling back to <paramref name="fallback"/> if the key is absent or blank.
+    /// </summary>
+    public string GetPackageId(string key, string fallback) =>
+        WingetPackageIds.TryGetValue(key, out var id) && !string.IsNullOrWhiteSpace(id) ? id : fallback;
+
     public static string DefaultRepository =>
         "https://github.com/<organisation>/SymphonyMessenger.git";
 }

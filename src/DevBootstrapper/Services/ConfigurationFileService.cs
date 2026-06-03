@@ -84,6 +84,18 @@ public sealed class ConfigurationFileService
         }
         config.AdditionalWingetPackages = packages;
 
+        // [WingetPackageIds]  –  override built-in package IDs with INI values
+        foreach (var key in new[]
+        {
+            "Git", "DotNetFramework48", "Rider",
+            "VisualStudio2022Community", "VisualStudio2022Professional",
+            "VisualStudio2019Community", "VisualStudio2019Professional"
+        })
+        {
+            if (ini.TryGet("WingetPackageIds", key, out string? pkgId) && !string.IsNullOrWhiteSpace(pkgId))
+                config.WingetPackageIds[key] = pkgId.Trim();
+        }
+
         return config;
     }
 
@@ -123,6 +135,17 @@ public sealed class ConfigurationFileService
 
         for (int i = 0; i < config.AdditionalWingetPackages.Count; i++)
             lines.Add($"Package{i + 1}={config.AdditionalWingetPackages[i]}");
+
+        lines.AddRange(new[]
+        {
+            "",
+            "[WingetPackageIds]",
+            "; Override the winget package IDs used for each known tool.",
+            "; Remove or comment out a line to revert to the built-in default."
+        });
+
+        foreach (var kvp in config.WingetPackageIds)
+            lines.Add($"{kvp.Key}={kvp.Value}");
 
         File.WriteAllLines(path, lines);
     }

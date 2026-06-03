@@ -77,7 +77,7 @@ public sealed class InstallOrchestrator
                 }
 
                 return await _provider.InstallPackageAsync(
-                    resolvedProvider, "Git.Git", null, _log.Log, config.SilentInstall);
+                    resolvedProvider, config.GetPackageId("Git", "Git.Git"), null, _log.Log, config.SilentInstall);
             }, onTaskUpdate);
         }
 
@@ -122,11 +122,11 @@ public sealed class InstallOrchestrator
 
                 string packageId = (config.VisualStudioEdition, config.VisualStudioVersion) switch
                 {
-                    (VisualStudioEdition.Community,    VisualStudioVersion.VS2019) => "Microsoft.VisualStudio.2019.Community",
-                    (VisualStudioEdition.Professional, VisualStudioVersion.VS2019) => "Microsoft.VisualStudio.2019.Professional",
-                    (VisualStudioEdition.Community,    VisualStudioVersion.VS2022) => "Microsoft.VisualStudio.2022.Community",
-                    (VisualStudioEdition.Professional, VisualStudioVersion.VS2022) => "Microsoft.VisualStudio.2022.Professional",
-                    _ => "Microsoft.VisualStudio.2022.Community"
+                    (VisualStudioEdition.Community,    VisualStudioVersion.VS2019) => config.GetPackageId("VisualStudio2019Community",    "Microsoft.VisualStudio.2019.Community"),
+                    (VisualStudioEdition.Professional, VisualStudioVersion.VS2019) => config.GetPackageId("VisualStudio2019Professional", "Microsoft.VisualStudio.2019.Professional"),
+                    (VisualStudioEdition.Community,    VisualStudioVersion.VS2022) => config.GetPackageId("VisualStudio2022Community",    "Microsoft.VisualStudio.2022.Community"),
+                    (VisualStudioEdition.Professional, VisualStudioVersion.VS2022) => config.GetPackageId("VisualStudio2022Professional", "Microsoft.VisualStudio.2022.Professional"),
+                    _ => config.GetPackageId("VisualStudio2022Community", "Microsoft.VisualStudio.2022.Community")
                 };
 
                 // Recommended workloads; /norestart added when silent install is requested
@@ -163,7 +163,7 @@ public sealed class InstallOrchestrator
                 }
 
                 return await _provider.InstallPackageAsync(
-                    resolvedProvider, "JetBrains.Rider", versionArg, _log.Log, config.SilentInstall);
+                    resolvedProvider, config.GetPackageId("Rider", "JetBrains.Rider"), versionArg, _log.Log, config.SilentInstall);
             }, onTaskUpdate);
         }
 
@@ -179,7 +179,7 @@ public sealed class InstallOrchestrator
                 }
 
                 bool ok = await _provider.InstallPackageAsync(
-                    resolvedProvider, "Microsoft.DotNet.Framework.DeveloperPack_4", null, _log.Log, config.SilentInstall);
+                    resolvedProvider, config.GetPackageId("DotNetFramework48", "Microsoft.DotNet.Framework.DeveloperPack_4"), null, _log.Log, config.SilentInstall);
 
                 if (ok && !_sysCheck.IsDotNetFramework48Installed())
                 {

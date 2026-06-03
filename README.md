@@ -2,13 +2,13 @@
 
 A **.NET 10** interactive console wizard that automates installation of a complete developer environment (Visual Studio, JetBrains Rider, .NET Framework 4.8, Git) using **winget** or **Chocolatey**, with optional Symphony Messenger repository cloning.
 
-Supports **version selection** for Visual Studio (2019 / 2022) and JetBrains Rider (latest or specific), **silent / unattended installs**, and a fully extensible **`bootstrapper.ini`** configuration file for adding extra winget packages without touching the code.
+Supports **version selection** for Visual Studio (2019 / 2022) and JetBrains Rider (latest or specific), **one-click Automatic Install** from `bootstrapper.ini`, **silent / unattended installs**, and a fully extensible `bootstrapper.ini` configuration file — including a `[WingetPackageIds]` section to override package IDs without touching code.
 
 ---
 
 ## Screenshots
 
-### Wizard – Step-by-step setup prompts
+### Wizard – Automatic Install option at launch
 
 ![Setup Wizard](docs/screenshots/wizard.svg)
 
@@ -24,11 +24,13 @@ Supports **version selection** for Visual Studio (2019 / 2022) and JetBrains Rid
 
 ## Features
 
+- **Automatic Install at launch** – choose `[1] Automatic Install` at the very first prompt to install everything defined in `bootstrapper.ini` with no further prompts
 - **11-step interactive wizard** – guided prompts from environment selection through tool version selection, silent-install toggle, and extra package configuration; followed by a live installation phase and a completion summary
 - **VS version selection** – choose Visual Studio 2019 or 2022 (Community or Professional)
-- **Rider version selection** – install the latest Rider release or pin to a specific version (e.g. `2024.1`)
+- **Rider version selection** – install the latest Rider release or pin to a specific version (e.g. `2024.3`)
 - **Silent install mode** – suppresses interactive installer windows; ideal for CI or scripted builds
 - **Extra winget packages** – add any number of additional software packages (e.g. Windows Terminal, PowerShell 7, Docker Desktop) via the wizard or `bootstrapper.ini`
+- **`[WingetPackageIds]` section** – override the winget package ID for any known tool in `bootstrapper.ini` without touching the source code
 - **`bootstrapper.ini` configuration file** – pre-populate wizard defaults or drive a fully unattended run with `--silent`
 - **Vivid Terminal.Gui dashboard** – full-screen TUI with bright 16-colour schemes, a live progress bar, task list and scrolling log panel
 - **Dual package providers** – winget (preferred) or Chocolatey with optional auto-install; auto-detect mode picks the best available provider
@@ -72,7 +74,7 @@ dotnet run --project src/DevBootstrapper/DevBootstrapper.csproj -- --silent
 
 ## Configuration File (`bootstrapper.ini`)
 
-`bootstrapper.ini` lives next to the executable (or in the current working directory). It pre-populates wizard defaults and enables **unattended installation** via `--silent`.
+`bootstrapper.ini` lives next to the executable (or in the current working directory).  It pre-populates wizard defaults, enables **Automatic Install** at launch, and drives fully **unattended installation** via `--silent`.
 
 ```ini
 ; DevBootstrapper Configuration File
@@ -87,7 +89,7 @@ Version=VS2022               ; VS2019 | VS2022
 
 [Rider]
 Install=true
-Version=latest               ; "latest" or specific e.g. 2024.1
+Version=latest               ; "latest" or specific e.g. 2024.3
 
 [Git]
 Install=true
@@ -99,10 +101,37 @@ Install=true
 ; Add any number of extra winget package IDs
 Package1=Microsoft.PowerShell
 Package2=Microsoft.WindowsTerminal
-Package3=Docker.DockerDesktop
+Package3=Notepad++.Notepad++
+Package4=Docker.DockerDesktop
+Package5=Postman.Postman
+
+[WingetPackageIds]
+; Override the winget package ID used for each known tool.
+; Remove a line to revert to the built-in default.
+Git=Git.Git
+DotNetFramework48=Microsoft.DotNet.Framework.DeveloperPack_4
+Rider=JetBrains.Rider
+VisualStudio2022Community=Microsoft.VisualStudio.2022.Community
+VisualStudio2022Professional=Microsoft.VisualStudio.2022.Professional
+VisualStudio2019Community=Microsoft.VisualStudio.2019.Community
+VisualStudio2019Professional=Microsoft.VisualStudio.2019.Professional
 ```
 
-After the wizard completes, your choices are automatically saved back to `bootstrapper.ini` so the next run uses them as defaults.
+After the wizard completes (or after Automatic Install), your choices are automatically saved back to `bootstrapper.ini` so the next run uses them as defaults.
+
+### `[WingetPackageIds]` — overriding package IDs
+
+Every known tool has a built-in winget package ID.  The `[WingetPackageIds]` section lets you change any of them without modifying source code — useful when an organisation mirrors packages or when a newer winget ID becomes available.
+
+| Key | Default ID |
+|---|---|
+| `Git` | `Git.Git` |
+| `DotNetFramework48` | `Microsoft.DotNet.Framework.DeveloperPack_4` |
+| `Rider` | `JetBrains.Rider` |
+| `VisualStudio2022Community` | `Microsoft.VisualStudio.2022.Community` |
+| `VisualStudio2022Professional` | `Microsoft.VisualStudio.2022.Professional` |
+| `VisualStudio2019Community` | `Microsoft.VisualStudio.2019.Community` |
+| `VisualStudio2019Professional` | `Microsoft.VisualStudio.2019.Professional` |
 
 ### Finding winget package IDs
 
@@ -114,10 +143,26 @@ Or browse [https://winget.run](https://winget.run) / [https://winstall.app](http
 
 ---
 
+## Automatic Install
+
+At the very first prompt the wizard offers two choices:
+
+```
+  [1]  Automatic Install  — install all tools from bootstrapper.ini without prompts
+  [2]  Interactive Setup  — configure step-by-step with the guided wizard
+```
+
+Choosing **`[1]`** immediately reads `bootstrapper.ini` (or uses built-in defaults when no file is present), prints a summary of what will be installed, and proceeds straight to the Terminal.Gui dashboard — no wizard steps required.
+
+> **Tip:** Combine Automatic Install with `SilentInstall=true` in `[General]` for a completely hands-free run.
+
+---
+
 ## Wizard Steps
 
 | Step | Description |
 |---|---|
+| Launch | **Mode selection** — `[1]` Automatic Install (use bootstrapper.ini, no prompts) or `[2]` Interactive Setup |
 | 1 | Select environment (Symphony Messenger or Custom) |
 | 2 | Choose working directory (default `C:\Work`) |
 | 3 | Repository setup – clone Symphony Messenger and/or additional repos |

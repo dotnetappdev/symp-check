@@ -31,6 +31,14 @@ public sealed class SetupWizard
 
         var config = initialConfig ?? new SetupConfiguration();
 
+        // ── Launch mode selection ──────────────────────────────────────────────
+        if (SelectLaunchMode(configLoadedFromFile: initialConfig is not null))
+        {
+            // Automatic Install: use the INI config (or defaults) without further prompts
+            PrintAutoInstallSummary(config);
+            return config;
+        }
+
         // Step 1 – Environment
         config.Environment = Step1_SelectEnvironment(config.Environment);
 
@@ -555,6 +563,124 @@ public sealed class SetupWizard
             if (input == "N") return false;
             WriteWarning("Please enter Y or N.");
         }
+    }
+
+    // -------------------------------------------------------------------------
+    // Launch mode selection (before any numbered step)
+    // -------------------------------------------------------------------------
+
+    /// <summary>
+    /// Prompts the user to choose Automatic Install or Interactive Setup.
+    /// Returns <c>true</c> when the user selects Automatic Install.
+    /// </summary>
+    private static bool SelectLaunchMode(bool configLoadedFromFile)
+    {
+        Console.ForegroundColor = ConsoleColor.White;
+        Console.WriteLine("  How would you like to proceed?");
+        Console.ResetColor();
+        Console.WriteLine();
+
+        WriteChoice("1", "Automatic Install" + (configLoadedFromFile ? "  — install all tools from bootstrapper.ini without prompts" : "  — install all tools with default settings"));
+        WriteChoice("2", "Interactive Setup  — configure step-by-step with the guided wizard");
+        Console.WriteLine();
+
+        while (true)
+        {
+            WritePrompt("Choice");
+            string? input = Console.ReadLine()?.Trim();
+            switch (input)
+            {
+                case "1": return true;
+                case "2": return false;
+                case "":  return false; // default to interactive
+                default:
+                    WriteWarning("Please enter 1 or 2.");
+                    break;
+            }
+        }
+    }
+
+    /// <summary>Prints a summary of what Automatic Install will do, then confirms.</summary>
+    private static void PrintAutoInstallSummary(SetupConfiguration config)
+    {
+        Console.WriteLine();
+        Console.ForegroundColor = ConsoleColor.DarkGray;
+        Console.WriteLine(new string('─', 52));
+        Console.ForegroundColor = ConsoleColor.Green;
+        Console.Write("  ✓  ");
+        Console.ForegroundColor = ConsoleColor.Cyan;
+        Console.WriteLine("Automatic Install selected");
+        Console.ForegroundColor = ConsoleColor.DarkGray;
+        Console.WriteLine(new string('─', 52));
+        Console.ResetColor();
+        Console.WriteLine();
+
+        WriteColored("  Tools to install:", ConsoleColor.White);
+        Console.WriteLine();
+
+        if (config.VisualStudioEdition != VisualStudioEdition.Skip)
+        {
+            WriteColored("    ✓ ", ConsoleColor.Green);
+            string vsId = config.GetPackageId(
+                $"VisualStudio{config.VisualStudioVersion.ToYear()}{config.VisualStudioEdition}",
+                $"Microsoft.VisualStudio.{config.VisualStudioVersion.ToYear()}.{config.VisualStudioEdition}");
+            WriteColored($"Visual Studio {config.VisualStudioEdition} {config.VisualStudioVersion.ToYear()}", ConsoleColor.Cyan);
+            Console.ForegroundColor = ConsoleColor.DarkGray;
+            Console.WriteLine($"  ({vsId})");
+            Console.ResetColor();
+        }
+
+        if (config.InstallRider)
+        {
+            WriteColored("    ✓ ", ConsoleColor.Green);
+            string riderVersion = config.RiderVersion.Equals("latest", StringComparison.OrdinalIgnoreCase)
+                ? "latest"
+                : config.RiderVersion;
+            WriteColored($"JetBrains Rider ({riderVersion})", ConsoleColor.Cyan);
+            Console.ForegroundColor = ConsoleColor.DarkGray;
+            Console.WriteLine($"  ({config.GetPackageId("Rider", "JetBrains.Rider")})");
+            Console.ResetColor();
+        }
+
+        if (config.InstallDotNetFramework48)
+        {
+            WriteColored("    ✓ ", ConsoleColor.Green);
+            WriteColored(".NET Framework 4.8", ConsoleColor.Cyan);
+            Console.ForegroundColor = ConsoleColor.DarkGray;
+            Console.WriteLine($"  ({config.GetPackageId("DotNetFramework48", "Microsoft.DotNet.Framework.DeveloperPack_4")})");
+            Console.ResetColor();
+        }
+
+        if (config.InstallGit)
+        {
+            WriteColored("    ✓ ", ConsoleColor.Green);
+            WriteColored("Git", ConsoleColor.Cyan);
+            Console.ForegroundColor = ConsoleColor.DarkGray;
+            Console.WriteLine($"  ({config.GetPackageId("Git", "Git.Git")})");
+            Console.ResetColor();
+        }
+
+        if (config.AdditionalWingetPackages.Count > 0)
+        {
+            Console.WriteLine();
+            WriteColored("  Additional packages:", ConsoleColor.White);
+            Console.WriteLine();
+            foreach (string pkg in config.AdditionalWingetPackages)
+            {
+                WriteColored("    ✓ ", ConsoleColor.Green);
+                WriteColored(pkg, ConsoleColor.Cyan);
+                Console.WriteLine();
+            }
+        }
+
+        Console.WriteLine();
+        WriteColored($"  Working directory: ", ConsoleColor.Gray);
+        WriteColored(config.WorkingDirectory, ConsoleColor.Cyan);
+        Console.WriteLine();
+        WriteColored($"  Silent install:    ", ConsoleColor.Gray);
+        WriteColored(config.SilentInstall ? "Yes" : "No", ConsoleColor.Cyan);
+        Console.WriteLine();
+        Console.WriteLine();
     }
 
     // -------------------------------------------------------------------------

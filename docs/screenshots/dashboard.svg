@@ -1,0 +1,88 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="900" height="580" viewBox="0 0 900 580">
+  <defs>
+    <style>
+      .terminal { font-family: 'Cascadia Code', 'Consolas', 'Courier New', monospace; font-size: 13px; }
+      .bg { fill: #0C0C0C; }
+      .cyan { fill: #00D7D7; }
+      .yellow { fill: #FFD700; }
+      .white { fill: #F8F8F8; }
+      .green { fill: #16C60C; }
+      .magenta { fill: #FF40FF; }
+      .gray { fill: #888888; }
+      .dark-gray { fill: #444444; }
+      .progress-fill { fill: #16C60C; }
+      .frame-border { fill: none; stroke-width: 1; }
+      .running { fill: #FFBD2E; }
+    </style>
+  </defs>
+
+  <!-- Terminal window background -->
+  <rect width="900" height="580" class="bg" rx="8"/>
+
+  <!-- Title bar -->
+  <rect x="0" y="0" width="900" height="28" fill="#2D2D2D" rx="8"/>
+  <rect x="0" y="14" width="900" height="14" fill="#2D2D2D"/>
+  <circle cx="20" cy="14" r="6" fill="#FF5F57"/>
+  <circle cx="42" cy="14" r="6" fill="#FFBD2E"/>
+  <circle cx="64" cy="14" r="6" fill="#28C840"/>
+  <text x="450" y="19" text-anchor="middle" fill="#AAAAAA" font-family="Segoe UI, sans-serif" font-size="12">DevBootstrapper — Installation Dashboard</text>
+
+  <!-- Content area -->
+  <g class="terminal" transform="translate(12, 44)">
+
+    <!-- Title banner -->
+    <text x="200" y="18" class="yellow">══  Developer Environment Bootstrapper  ══</text>
+
+    <!-- Overall Progress frame -->
+    <rect x="0" y="26" width="876" height="52" fill="none" stroke="#16C60C" stroke-width="1" rx="1"/>
+    <rect x="8" y="20" width="134" height="12" fill="#0C0C0C"/>
+    <text x="10" y="30" class="green">Overall Progress</text>
+
+    <!-- Progress bar background -->
+    <rect x="8" y="40" width="858" height="14" fill="#1a1a1a" rx="2"/>
+    <!-- Progress fill (55%) -->
+    <rect x="8" y="40" width="472" height="14" class="progress-fill" rx="2"/>
+
+    <!-- Current task label -->
+    <text x="14" y="96" class="cyan">Current Task: Install Visual Studio Community 2022</text>
+
+    <!-- Tasks panel frame (left half) -->
+    <rect x="0" y="106" width="436" height="370" fill="none" stroke="#00D7D7" stroke-width="1" rx="1"/>
+    <rect x="8" y="100" width="46" height="12" fill="#0C0C0C"/>
+    <text x="10" y="110" class="cyan">Tasks</text>
+
+    <!-- Task items -->
+    <text x="8" y="130" class="green">✓  Working Directory</text>
+    <text x="8" y="150" class="green">✓  Install Git</text>
+    <text x="8" y="170" class="green">✓  Install .NET Framework 4.8</text>
+    <text x="8" y="190" class="running">⟳  Install Visual Studio Community 2022</text>
+    <text x="8" y="210" class="gray">□  Install JetBrains Rider</text>
+    <text x="8" y="230" class="gray">□  Clone SymphonyMessenger</text>
+    <text x="8" y="250" class="gray">□  Install Microsoft.PowerShell</text>
+    <text x="8" y="270" class="gray">□  Install Microsoft.WindowsTerminal</text>
+
+    <!-- Log panel frame (right half) -->
+    <rect x="444" y="106" width="432" height="370" fill="none" stroke="#FF40FF" stroke-width="1" rx="1"/>
+    <rect x="452" y="100" width="58" height="12" fill="#0C0C0C"/>
+    <text x="454" y="110" class="magenta">Live Log</text>
+
+    <!-- Log lines -->
+    <text x="452" y="130" class="yellow">[14:22] [Completed] Working Directory</text>
+    <text x="452" y="150" class="yellow">[14:22] [Completed] Install Git</text>
+    <text x="452" y="170" class="yellow">[14:22] [Completed] Install .NET Framework 4.8</text>
+    <text x="452" y="190" class="yellow">[14:23] [Running] Install Visual Studio Community 2022</text>
+    <text x="452" y="210" class="yellow">[14:23] winget install --id Microsoft.VisualStudio.2022.Community</text>
+    <text x="452" y="230" class="yellow">[14:23] --override "--quiet --norestart --add workloads..."</text>
+    <text x="452" y="250" class="yellow">[14:23] Downloading packages...</text>
+    <text x="452" y="270" class="yellow">[14:24] Progress: 42%</text>
+    <text x="452" y="290" class="yellow">[14:24] Progress: 78%</text>
+    <text x="452" y="310" class="yellow">[14:25] Configuring components...</text>
+    <text x="452" y="330" class="yellow">[14:25] Applying workloads: ASP.NET, Desktop</text>
+    <text x="452" y="350" class="yellow">[14:26] Almost done...</text>
+    <!-- cursor blink -->
+    <rect x="452" y="360" width="8" height="13" fill="#FFD700" opacity="0.9">
+      <animate attributeName="opacity" values="1;0;1" dur="1s" repeatCount="indefinite"/>
+    </rect>
+
+  </g>
+</svg>

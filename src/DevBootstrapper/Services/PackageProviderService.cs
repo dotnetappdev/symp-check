@@ -6,13 +6,11 @@ namespace DevBootstrapper.Services;
 /// <summary>Invokes winget package installation commands.</summary>
 public sealed class PackageProviderService
 {
-    public bool IsWingetAvailable() => IsCommandAvailable("winget");
-
     /// <summary>
     /// Resolves the effective provider.
     /// The installer is winget-only.
     /// </summary>
-    public PackageProvider Resolve(PackageProvider _) => PackageProvider.Winget;
+    public PackageProvider Resolve() => PackageProvider.Winget;
 
     /// <summary>Installs a package with the specified provider and package ID.</summary>
     public async Task<bool> InstallPackageAsync(

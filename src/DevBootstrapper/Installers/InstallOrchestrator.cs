@@ -32,7 +32,7 @@ public sealed class InstallOrchestrator
         List<InstallTask> tasks,
         Action<InstallTask> onTaskUpdate)
     {
-        PackageProvider resolvedProvider = _provider.Resolve(config.PackageProvider);
+        PackageProvider resolvedProvider = _provider.Resolve();
 
         // Working directory
         var dirTask = GetTask(tasks, "Working Directory");

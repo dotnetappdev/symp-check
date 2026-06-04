@@ -1,6 +1,6 @@
 # DevBootstrapper
 
-A **.NET 10** interactive console wizard that automates installation of a complete developer environment (Visual Studio, JetBrains Rider, .NET Framework 4.8, Git) using **winget** or **Chocolatey**, with optional Symphony Messenger repository cloning.
+A **.NET 10** interactive console wizard that automates installation of a complete developer environment (Visual Studio, JetBrains Rider, .NET Framework 4.8, Git) using **winget**, with optional Symphony Messenger repository cloning.
 
 Supports **version selection** for Visual Studio (2019 / 2022) and JetBrains Rider (latest or specific), **one-click Automatic Install** from `bootstrapper.ini`, **silent / unattended installs**, and a fully extensible `bootstrapper.ini` configuration file — including a `[WingetPackageIds]` section to override package IDs without touching code.
 
@@ -33,7 +33,7 @@ Supports **version selection** for Visual Studio (2019 / 2022) and JetBrains Rid
 - **`[WingetPackageIds]` section** – override the winget package ID for any known tool in `bootstrapper.ini` without touching the source code
 - **`bootstrapper.ini` configuration file** – pre-populate wizard defaults or drive a fully unattended run with `--silent`
 - **Vivid Terminal.Gui dashboard** – full-screen TUI with bright 16-colour schemes, a live progress bar, task list and scrolling log panel
-- **Dual package providers** – winget (preferred) or Chocolatey with optional auto-install; auto-detect mode picks the best available provider
+- **Winget-based installs** – all package installs run through winget
 - **Secure product key input** – VS Professional key is read char-by-char, masked (`*`), and cleared from memory immediately; never reaches any log file
 - **.NET Framework 4.8 detection** – checks `HKLM\SOFTWARE\Microsoft\NET Framework Setup\NDP\v4\Full` (release value ≥ 528040) before offering installation
 - **Skip already-installed tools** – each task is checked before running, avoiding duplicate installs
@@ -47,7 +47,7 @@ Supports **version selection** for Visual Studio (2019 / 2022) and JetBrains Rid
 |---|---|
 | Windows 10 / 11 | Registry-based checks require Windows |
 | .NET 10 SDK | [Download](https://dotnet.microsoft.com/download/dotnet/10.0) |
-| winget **or** Chocolatey | At least one must be present, or choose auto-install Chocolatey |
+| winget | Must be installed |
 
 ---
 
@@ -61,14 +61,14 @@ cd symp-check
 # Build
 dotnet build src/DevBootstrapper/DevBootstrapper.csproj
 
-# Run (requires Windows – uses winget / Chocolatey / registry APIs)
+# Run (requires Windows – uses winget / registry APIs)
 dotnet run --project src/DevBootstrapper/DevBootstrapper.csproj
 
 # Unattended / silent mode – skips the wizard and uses bootstrapper.ini
 dotnet run --project src/DevBootstrapper/DevBootstrapper.csproj -- --silent
 ```
 
-> **Note:** The installer calls `winget` / `choco` and writes to the Windows registry. Run in an elevated terminal when installing software.
+> **Note:** The installer calls `winget` and writes to the Windows registry. Run in an elevated terminal when installing software.
 
 ---
 
@@ -80,7 +80,7 @@ dotnet run --project src/DevBootstrapper/DevBootstrapper.csproj -- --silent
 ; DevBootstrapper Configuration File
 [General]
 WorkingDirectory=C:\Work
-PackageProvider=AutoDetect   ; AutoDetect | Winget | Chocolatey
+PackageProvider=Winget       ; Winget
 SilentInstall=false
 
 [VisualStudio]
@@ -166,7 +166,7 @@ Choosing **`[1]`** immediately reads `bootstrapper.ini` (or uses built-in defaul
 | 1 | Select environment (Symphony Messenger or Custom) |
 | 2 | Choose working directory (default `C:\Work`) |
 | 3 | Repository setup – clone Symphony Messenger and/or additional repos |
-| 4 | Select package provider (Auto / winget / Chocolatey) |
+| 4 | Package provider (winget only) |
 | 5 | Visual Studio edition (Community / Professional / Skip) **+ release year (2019 / 2022)** |
 | 6 | JetBrains Rider (Yes / No) **+ version (latest or specific)** |
 | 7 | .NET Framework 4.8 (auto-detected, skip if already installed) |
@@ -202,7 +202,7 @@ src/DevBootstrapper/
 │   ├── SetupWizard.cs            – 11-step interactive prompts
 │   └── TaskListBuilder.cs        – builds task list from config
 ├── Services/
-│   ├── PackageProviderService.cs – winget / choco detection & invocation
+│   ├── PackageProviderService.cs – winget invocation
 │   ├── GitService.cs             – git detection & clone
 │   ├── SystemCheckService.cs     – registry-based .NET Framework 4.8 + VS version detection
 │   ├── ConfigurationFileService.cs – bootstrapper.ini reader / writer

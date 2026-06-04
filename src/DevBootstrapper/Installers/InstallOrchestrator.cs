@@ -53,18 +53,6 @@ public sealed class InstallOrchestrator
 
         onTaskUpdate(dirTask);
 
-        // Chocolatey install (if needed)
-        if (resolvedProvider == PackageProvider.Chocolatey && !_provider.IsChocolateyAvailable())
-        {
-            var chocoTask = GetTask(tasks, "Install Chocolatey");
-            chocoTask.Status = InstallStatus.Running;
-            onTaskUpdate(chocoTask);
-
-            bool ok = await _provider.InstallChocolateyAsync(_log.Log);
-            chocoTask.Status = ok ? InstallStatus.Completed : InstallStatus.Failed;
-            onTaskUpdate(chocoTask);
-        }
-
         // Git
         if (config.InstallGit)
         {
@@ -131,9 +119,8 @@ public sealed class InstallOrchestrator
 
                 // Recommended workloads; /norestart added when silent install is requested
                 string vsInstallMode = config.SilentInstall ? "--quiet --norestart" : "--quiet";
-                string workloadArgs = resolvedProvider == PackageProvider.Winget
-                    ? $"--override \"{vsInstallMode} --add Microsoft.VisualStudio.Workload.ManagedDesktop --add Microsoft.VisualStudio.Workload.NetWeb --includeRecommended\""
-                    : null!;
+                string workloadArgs =
+                    $"--override \"{vsInstallMode} --add Microsoft.VisualStudio.Workload.ManagedDesktop --add Microsoft.VisualStudio.Workload.NetWeb --includeRecommended\"";
 
                 bool installed = await _provider.InstallPackageAsync(
                     resolvedProvider, packageId, workloadArgs, _log.Log, config.SilentInstall);

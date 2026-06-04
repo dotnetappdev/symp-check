@@ -10,9 +10,7 @@ public enum EnvironmentType
 /// <summary>Describes the package provider to use for installations.</summary>
 public enum PackageProvider
 {
-    AutoDetect,
-    Winget,
-    Chocolatey
+    Winget
 }
 
 /// <summary>Describes the Visual Studio edition to install.</summary>
@@ -49,7 +47,7 @@ public sealed class SetupConfiguration
     public string WorkingDirectory { get; set; } = @"C:\Work";
     public bool CloneDefaultRepository { get; set; } = true;
     public List<string> AdditionalRepositories { get; set; } = [];
-    public PackageProvider PackageProvider { get; set; } = PackageProvider.AutoDetect;
+    public PackageProvider PackageProvider { get; set; } = PackageProvider.Winget;
     public VisualStudioEdition VisualStudioEdition { get; set; } = VisualStudioEdition.Community;
 
     /// <summary>Visual Studio release year (e.g. 2019, 2022).</summary>

@@ -39,7 +39,8 @@ public sealed class ConfigurationFileService
             config.WorkingDirectory = wd;
 
         if (ini.TryGet("General", "PackageProvider", out string? pp) &&
-            Enum.TryParse<PackageProvider>(pp, ignoreCase: true, out var parsedPp))
+            Enum.TryParse<PackageProvider>(pp, ignoreCase: true, out var parsedPp) &&
+            parsedPp == PackageProvider.Winget)
             config.PackageProvider = parsedPp;
 
         if (ini.TryGet("General", "SilentInstall", out string? si) &&

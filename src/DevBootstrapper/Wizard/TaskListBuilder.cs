@@ -12,9 +12,6 @@ public static class TaskListBuilder
             new() { Name = "Working Directory" }
         };
 
-        if (config.PackageProvider == PackageProvider.Chocolatey)
-            tasks.Add(new() { Name = "Install Chocolatey" });
-
         if (config.InstallGit)
             tasks.Add(new() { Name = "Install Git" });
 
@@ -50,4 +47,3 @@ public static class TaskListBuilder
             : last;
     }
 }
-

@@ -32,8 +32,6 @@ public sealed class InstallOrchestrator
         List<InstallTask> tasks,
         Action<InstallTask> onTaskUpdate)
     {
-        PackageProvider resolvedProvider = _provider.Resolve(config.PackageProvider);
-
         // Working directory
         var dirTask = GetTask(tasks, "Working Directory");
         try
@@ -53,18 +51,6 @@ public sealed class InstallOrchestrator
 
         onTaskUpdate(dirTask);
 
-        // Chocolatey install (if needed)
-        if (resolvedProvider == PackageProvider.Chocolatey && !_provider.IsChocolateyAvailable())
-        {
-            var chocoTask = GetTask(tasks, "Install Chocolatey");
-            chocoTask.Status = InstallStatus.Running;
-            onTaskUpdate(chocoTask);
-
-            bool ok = await _provider.InstallChocolateyAsync(_log.Log);
-            chocoTask.Status = ok ? InstallStatus.Completed : InstallStatus.Failed;
-            onTaskUpdate(chocoTask);
-        }
-
         // Git
         if (config.InstallGit)
         {
@@ -77,7 +63,7 @@ public sealed class InstallOrchestrator
                 }
 
                 return await _provider.InstallPackageAsync(
-                    resolvedProvider, config.GetPackageId("Git", "Git.Git"), null, _log.Log, config.SilentInstall);
+                    config.GetPackageId("Git", "Git.Git"), null, _log.Log, config.SilentInstall);
             }, onTaskUpdate);
         }
 
@@ -131,12 +117,11 @@ public sealed class InstallOrchestrator
 
                 // Recommended workloads; /norestart added when silent install is requested
                 string vsInstallMode = config.SilentInstall ? "--quiet --norestart" : "--quiet";
-                string workloadArgs = resolvedProvider == PackageProvider.Winget
-                    ? $"--override \"{vsInstallMode} --add Microsoft.VisualStudio.Workload.ManagedDesktop --add Microsoft.VisualStudio.Workload.NetWeb --includeRecommended\""
-                    : null!;
+                string workloadArgs =
+                    $"--override \"{vsInstallMode} --add Microsoft.VisualStudio.Workload.ManagedDesktop --add Microsoft.VisualStudio.Workload.NetWeb --includeRecommended\"";
 
                 bool installed = await _provider.InstallPackageAsync(
-                    resolvedProvider, packageId, workloadArgs, _log.Log, config.SilentInstall);
+                    packageId, workloadArgs, _log.Log, config.SilentInstall);
 
                 // Product key is handled via VS activation UI; never logged
                 return installed;
@@ -163,7 +148,7 @@ public sealed class InstallOrchestrator
                 }
 
                 return await _provider.InstallPackageAsync(
-                    resolvedProvider, config.GetPackageId("Rider", "JetBrains.Rider"), versionArg, _log.Log, config.SilentInstall);
+                    config.GetPackageId("Rider", "JetBrains.Rider"), versionArg, _log.Log, config.SilentInstall);
             }, onTaskUpdate);
         }
 
@@ -179,7 +164,7 @@ public sealed class InstallOrchestrator
                 }
 
                 bool ok = await _provider.InstallPackageAsync(
-                    resolvedProvider, config.GetPackageId("DotNetFramework48", "Microsoft.DotNet.Framework.DeveloperPack_4"), null, _log.Log, config.SilentInstall);
+                    config.GetPackageId("DotNetFramework48", "Microsoft.DotNet.Framework.DeveloperPack_4"), null, _log.Log, config.SilentInstall);
 
                 if (ok && !_sysCheck.IsDotNetFramework48Installed())
                 {
@@ -198,7 +183,7 @@ public sealed class InstallOrchestrator
             {
                 _log.Log($"Installing additional package: {capturedId}");
                 return await _provider.InstallPackageAsync(
-                    PackageProvider.Winget, capturedId, null, _log.Log, config.SilentInstall);
+                    capturedId, null, _log.Log, config.SilentInstall);
             }, onTaskUpdate);
         }
     }

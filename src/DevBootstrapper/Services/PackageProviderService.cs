@@ -1,73 +1,21 @@
 using System.Diagnostics;
-using System.Runtime.InteropServices;
 using DevBootstrapper.Models;
 
 namespace DevBootstrapper.Services;
 
-/// <summary>Detects and invokes package providers (winget / Chocolatey).</summary>
+/// <summary>Invokes winget package installation commands.</summary>
 public sealed class PackageProviderService
 {
-    public bool IsWingetAvailable() => IsCommandAvailable("winget");
-
-    public bool IsChocolateyAvailable() => IsCommandAvailable("choco");
-
-    /// <summary>
-    /// Resolves the effective provider based on user choice.
-    /// Falls back to the next available provider when AutoDetect is selected.
-    /// </summary>
-    public PackageProvider Resolve(PackageProvider requested)
-    {
-        if (requested == PackageProvider.AutoDetect)
-        {
-            if (IsWingetAvailable()) return PackageProvider.Winget;
-            if (IsChocolateyAvailable()) return PackageProvider.Chocolatey;
-            return PackageProvider.Winget; // will be installed later
-        }
-
-        return requested;
-    }
-
-    /// <summary>Installs Chocolatey via the official PowerShell bootstrap script.</summary>
-    public async Task<bool> InstallChocolateyAsync(Action<string> log)
-    {
-        if (!RuntimeInformation.IsOSPlatform(OSPlatform.Windows))
-        {
-            log("Chocolatey installation is only supported on Windows.");
-            return false;
-        }
-
-        log("Downloading and installing Chocolatey...");
-        const string script =
-            "Set-ExecutionPolicy Bypass -Scope Process -Force;" +
-            "[System.Net.ServicePointManager]::SecurityProtocol = [System.Net.ServicePointManager]::SecurityProtocol -bor 3072;" +
-            "iex ((New-Object System.Net.WebClient).DownloadString('https://community.chocolatey.org/install.ps1'))";
-
-        return await RunProcessAsync("powershell.exe", $"-NoProfile -Command \"{script}\"", log);
-    }
-
-    /// <summary>Installs a package with the specified provider and package ID.</summary>
+    /// <summary>Installs a package by winget package ID.</summary>
     public async Task<bool> InstallPackageAsync(
-        PackageProvider provider,
         string packageId,
         string? extraArgs,
         Action<string> log,
         bool silentInstall = false)
     {
-        string args = provider switch
-        {
-            PackageProvider.Winget =>
-                $"install --id {packageId} --silent --accept-package-agreements --accept-source-agreements{(extraArgs is not null ? " " + extraArgs : "")}",
-            PackageProvider.Chocolatey =>
-                $"install {packageId} -y{(silentInstall ? " --no-progress" : "")}{(extraArgs is not null ? " " + extraArgs : "")}",
-            _ => throw new InvalidOperationException($"Unsupported provider: {provider}")
-        };
-
-        string exe = provider switch
-        {
-            PackageProvider.Winget => "winget",
-            PackageProvider.Chocolatey => "choco",
-            _ => throw new InvalidOperationException($"Unsupported provider: {provider}")
-        };
+        string args =
+            $"install --id {packageId} --silent --accept-package-agreements --accept-source-agreements{(extraArgs is not null ? " " + extraArgs : "")}";
+        const string exe = "winget";
 
         return await RunProcessAsync(exe, args, log);
     }

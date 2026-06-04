@@ -6,16 +6,13 @@ namespace DevBootstrapper.Wizard;
 /// <summary>Contains all interactive wizard steps run in sequence before installation.</summary>
 public sealed class SetupWizard
 {
-    private readonly PackageProviderService _packageProvider;
     private readonly GitService _git;
     private readonly SystemCheckService _sysCheck;
 
     public SetupWizard(
-        PackageProviderService packageProvider,
         GitService git,
         SystemCheckService sysCheck)
     {
-        _packageProvider = packageProvider;
         _git = git;
         _sysCheck = sysCheck;
     }
@@ -53,7 +50,7 @@ public sealed class SetupWizard
         }
 
         // Step 4 – Package provider
-        config.PackageProvider = Step4_PackageProvider(config.PackageProvider);
+        config.PackageProvider = Step4_PackageProvider();
 
         // Step 5 – Visual Studio edition + version
         (config.VisualStudioEdition, config.VisualStudioVersion) =
@@ -197,49 +194,12 @@ public sealed class SetupWizard
     // -------------------------------------------------------------------------
     // Step 4
     // -------------------------------------------------------------------------
-    private PackageProvider Step4_PackageProvider(PackageProvider current)
+    private static PackageProvider Step4_PackageProvider()
     {
         PrintStepHeader(4, "Package Provider");
-        WriteColored("Select installation provider", ConsoleColor.White);
+        WriteColored("Winget is used for all installations.", ConsoleColor.White);
         Console.WriteLine();
-        WriteChoice("1", "Auto Detect  (recommended)");
-        WriteChoice("2", "Winget");
-        WriteChoice("3", "Chocolatey");
-        Console.WriteLine();
-
-        PackageProvider choice;
-        while (true)
-        {
-            WritePrompt("Choice");
-            string? input = Console.ReadLine()?.Trim();
-            switch (input)
-            {
-                case "1": choice = PackageProvider.AutoDetect; goto done;
-                case "2": choice = PackageProvider.Winget; goto done;
-                case "3": choice = PackageProvider.Chocolatey; goto done;
-                case "":  choice = current; goto done;
-                default:
-                    WriteWarning("Please enter 1, 2, or 3.");
-                    break;
-            }
-        }
-
-        done:
-        // Warn if Chocolatey is selected but not installed
-        if (choice == PackageProvider.Chocolatey && !_packageProvider.IsChocolateyAvailable())
-        {
-            Console.WriteLine();
-            WriteWarning("Chocolatey was not found.");
-            Console.WriteLine();
-            bool install = PromptYesNo("Install Chocolatey?", defaultYes: true);
-            if (!install)
-            {
-                WriteWarning("Falling back to Winget.");
-                choice = PackageProvider.Winget;
-            }
-        }
-
-        return choice;
+        return PackageProvider.Winget;
     }
 
     // -------------------------------------------------------------------------
@@ -780,4 +740,3 @@ public sealed class SetupWizard
         Console.ResetColor();
     }
 }
-

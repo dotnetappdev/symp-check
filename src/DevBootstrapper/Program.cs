@@ -31,7 +31,7 @@ if (unattended && savedConfig is not null)
 else
 {
     // Wizard (Steps 1–11)
-    var wizard = new SetupWizard(packageProvider, git, sysCheck);
+    var wizard = new SetupWizard(git, sysCheck);
     config = wizard.Run(savedConfig);
 
     // Persist completed configuration so the next run can use it as defaults

@@ -12,7 +12,7 @@ public sealed class PackageProviderService
     /// Resolves the effective provider.
     /// The installer is winget-only.
     /// </summary>
-    public PackageProvider Resolve(PackageProvider requested) => PackageProvider.Winget;
+    public PackageProvider Resolve(PackageProvider _) => PackageProvider.Winget;
 
     /// <summary>Installs a package with the specified provider and package ID.</summary>
     public async Task<bool> InstallPackageAsync(
